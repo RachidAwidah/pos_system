@@ -29,8 +29,6 @@ class ProductFactory extends Factory
             'type' => ProductType::Stock,
             'cost_price' => $costPrice,
             'price' => $price,
-            'quantity' => fake()->numberBetween(10, 250),
-            'reorder_level' => fake()->numberBetween(5, 40),
             'description' => fake()->sentence(),
             'tax_id' => Tax::factory(),
             'category_id' => Category::factory(),

@@ -17,6 +17,7 @@
 /.nova
 /.phpunit.cache
 /.vscode
+/.vite
 /.zed
 /auth.json
 /node_modules

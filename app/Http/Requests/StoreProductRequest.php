@@ -33,8 +33,6 @@ class StoreProductRequest extends FormRequest
             'tax_id' => ['nullable', 'uuid', 'exists:taxes,id'],
             'cost_price' => ['required', 'numeric', 'min:0'],
             'price' => ['required', 'numeric', 'min:0'],
-            'quantity' => ['required', 'numeric', 'decimal:0,3', 'min:0'],
-            'reorder_level' => ['required', 'numeric', 'decimal:0,3', 'min:0'],
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'string', 'max:2048'],
         ];

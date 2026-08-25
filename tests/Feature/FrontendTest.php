@@ -40,7 +40,9 @@ class FrontendTest extends TestCase
         $this->actingAs($admin)->get('/pos')->assertOk()->assertSee('شاشة البيع');
         $this->actingAs($admin)->get('/products')->assertOk()->assertSee('Bottled Water');
         $this->actingAs($admin)->get('/orders')->assertOk()->assertSee('سجل الفواتير');
-        $this->actingAs($admin)->get('/contacts')->assertOk()->assertSee('Walk-in Customer');
+        $this->actingAs($admin)->get('/reports')->assertOk()->assertSee('التقارير والتحليلات');
+        $this->actingAs($admin)->get('/customers')->assertOk()->assertSee('Walk-in Customer');
+        $this->actingAs($admin)->get('/suppliers')->assertOk()->assertSee('Main Supplier');
         $this->actingAs($admin)->get('/users')->assertOk()->assertSee($admin->full_name);
         $this->actingAs($admin)->get('/users/create')->assertOk()->assertSee('إنشاء مستخدم');
         $this->actingAs($admin)->get(route('users.edit', $admin))->assertOk()->assertSee('تعديل المستخدم');

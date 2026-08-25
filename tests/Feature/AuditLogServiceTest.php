@@ -31,7 +31,12 @@ class AuditLogServiceTest extends TestCase
             'integration' => ['access_token' => 'new-token', 'enabled' => true],
         ]);
 
-        $audit = AuditLog::query()->latest('logged_at')->firstOrFail();
+        $audit = AuditLog::query()
+            ->where('entity_type', User::class)
+            ->where('entity_id', $admin->id)
+            ->where('action', 'update')
+            ->latest('logged_at')
+            ->firstOrFail();
 
         $this->assertEquals([
             'full_name' => 'Old Name',
@@ -62,7 +67,7 @@ class AuditLogServiceTest extends TestCase
     {
         $admin = User::query()->where('email', config('pos.admin_email'))->firstOrFail();
         AuditLogService::log('test', User::class, $admin->id);
-        $audit = AuditLog::query()->latest('logged_at')->firstOrFail();
+        $audit = AuditLog::query()->where('action', 'test')->latest('logged_at')->firstOrFail();
 
         $this->expectException(LogicException::class);
 
@@ -73,7 +78,7 @@ class AuditLogServiceTest extends TestCase
     {
         $admin = User::query()->where('email', config('pos.admin_email'))->firstOrFail();
         AuditLogService::log('test', User::class, $admin->id);
-        $audit = AuditLog::query()->latest('logged_at')->firstOrFail();
+        $audit = AuditLog::query()->where('action', 'test')->latest('logged_at')->firstOrFail();
 
         $this->expectException(LogicException::class);
 

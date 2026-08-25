@@ -2,10 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Contact;
+use App\Enums\OrderPaymentStatus;
+use App\Enums\OrderStatus;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Shift;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -26,17 +29,20 @@ class OrderFactory extends Factory
         return [
             'invoice_number' => fake()->unique()->bothify('INV-########'),
             'user_id' => User::factory(),
-            'contact_id' => Contact::factory()->customer(),
+            'customer_id' => Customer::factory(),
             'shift_id' => Shift::factory(),
-            'status' => 'completed',
-            'total_amount' => $totalAmount,
+            'warehouse_id' => Warehouse::factory(),
+            'status' => OrderStatus::Completed,
+            'subtotal_amount' => $totalAmount,
             'discount_amount' => $discountAmount,
             'tax_amount' => $taxAmount,
             'final_amount' => $finalAmount,
             'paid_amount' => $paidAmount,
             'due_amount' => round($finalAmount - $paidAmount, 2),
-            'payment_status' => $paidAmount >= $finalAmount ? 'paid' : 'partial',
+            'refunded_amount' => 0,
+            'payment_status' => $paidAmount >= $finalAmount ? OrderPaymentStatus::Paid : OrderPaymentStatus::Partial,
             'order_date' => now()->subDays(fake()->numberBetween(0, 30)),
+            'completed_at' => now(),
         ];
     }
 }

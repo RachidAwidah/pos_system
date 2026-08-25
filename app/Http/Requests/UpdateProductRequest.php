@@ -33,8 +33,6 @@ class UpdateProductRequest extends FormRequest
             'tax_id' => ['sometimes', 'nullable', 'uuid', 'exists:taxes,id'],
             'cost_price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'price' => ['sometimes', 'required', 'numeric', 'min:0'],
-            'quantity' => ['sometimes', 'required', 'numeric', 'decimal:0,3', 'min:0'],
-            'reorder_level' => ['sometimes', 'required', 'numeric', 'decimal:0,3', 'min:0'],
             'description' => ['sometimes', 'nullable', 'string'],
             'image' => ['sometimes', 'nullable', 'string', 'max:2048'],
         ];

@@ -2,9 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Contact;
+use App\Enums\PaymentStatus;
+use App\Enums\PaymentType;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
+use App\Models\Shift;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,11 +22,17 @@ class PaymentFactory extends Factory
     {
         return [
             'order_id' => Order::factory(),
-            'contact_id' => Contact::factory()->customer(),
-            'payment_method' => fake()->randomElement(['cash', 'card', 'credit']),
-            'amount_paid' => fake()->randomFloat(2, 10, 1000),
+            'sales_return_id' => null,
+            'shift_id' => Shift::factory(),
+            'user_id' => User::factory(),
+            'payment_method_id' => PaymentMethod::factory(),
+            'type' => PaymentType::Payment,
+            'status' => PaymentStatus::Completed,
+            'amount' => fake()->randomFloat(2, 10, 1000),
+            'amount_tendered' => null,
+            'change_amount' => 0,
             'reference_number' => fake()->optional()->bothify('REF-####??'),
-            'payment_date' => now()->subDays(fake()->numberBetween(0, 30)),
+            'paid_at' => now()->subDays(fake()->numberBetween(0, 30)),
         ];
     }
 }

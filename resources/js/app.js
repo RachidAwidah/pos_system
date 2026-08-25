@@ -36,6 +36,15 @@ function initializePos() {
     const totalElement = root.querySelector('[data-cart-total]');
     const itemCountElement = root.querySelector('[data-cart-count]');
     const clearButton = root.querySelector('[data-cart-clear]');
+    const customer = root.querySelector('[data-pos-customer]');
+    const discountType = root.querySelector('[data-pos-discount-type]');
+    const discountValue = root.querySelector('[data-pos-discount-value]');
+    const paymentMethod = root.querySelector('[data-pos-payment-method]');
+    const paymentAmount = root.querySelector('[data-pos-payment-amount]');
+    const checkoutButton = root.querySelector('[data-pos-checkout]');
+    const message = root.querySelector('[data-pos-message]');
+    let checkoutTotal = 0;
+    let isSubmitting = false;
 
     const currency = new Intl.NumberFormat('ar', { style: 'currency', currency: 'USD' });
 
@@ -58,13 +67,13 @@ function initializePos() {
         productGrid.innerHTML = filtered.map((product) => `
             <button type="button" data-add-product="${product.id}" class="group flex min-h-36 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 text-right shadow-sm hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50" ${product.tracks_inventory && product.quantity <= 0 ? 'disabled' : ''}>
                 <span class="flex items-start justify-between gap-3">
-                    <span class="grid size-11 place-items-center rounded-xl bg-brand-50 text-lg font-bold text-brand-700">${product.name.charAt(0)}</span>
+                    <span class="grid size-11 place-items-center rounded-xl bg-brand-50 text-lg font-bold text-brand-700">${escapeHtml(product.name.charAt(0))}</span>
                     <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">${product.tracks_inventory ? `${product.quantity} ${product.unit}` : product.type}</span>
                 </span>
                 <span class="mt-4">
-                    <span class="block font-bold text-slate-900">${product.name}</span>
+                    <span class="block font-bold text-slate-900">${escapeHtml(product.name)}</span>
                     <span class="mt-1 flex items-center justify-between gap-2 text-sm text-slate-500">
-                        <span>${product.category}</span>
+                        <span>${escapeHtml(product.category)}</span>
                         <span class="font-bold text-brand-700">${currency.format(product.price)}</span>
                     </span>
                 </span>
@@ -114,7 +123,7 @@ function initializePos() {
             <div class="rounded-xl border border-slate-200 p-3">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <p class="font-bold text-slate-900">${item.name}</p>
+                        <p class="font-bold text-slate-900">${escapeHtml(item.name)}</p>
                         <p class="mt-1 text-sm text-slate-500">${currency.format(item.price)} للوحدة</p>
                     </div>
                     <button type="button" data-remove-product="${item.id}" class="text-sm text-red-600 hover:text-red-700">حذف</button>
@@ -130,13 +139,31 @@ function initializePos() {
             </div>
         `).join('');
 
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.cartQuantity), 0);
-        const tax = items.reduce((sum, item) => sum + (item.price * item.cartQuantity * item.tax_rate / 100), 0);
+        const lineSubtotals = items.map((item) => roundMoney(item.price * item.cartQuantity));
+        const subtotal = roundMoney(lineSubtotals.reduce((sum, value) => sum + value, 0));
+        const requestedDiscount = Number(discountValue?.value || 0);
+        const discount = roundMoney(discountType?.value === 'percentage'
+            ? subtotal * Math.min(requestedDiscount, 100) / 100
+            : discountType?.value === 'fixed' ? Math.min(requestedDiscount, subtotal) : 0);
+        let remainingDiscount = discount;
+        const tax = roundMoney(items.reduce((sum, item, index) => {
+            const lineDiscount = index === items.length - 1
+                ? remainingDiscount
+                : roundMoney(discount * lineSubtotals[index] / subtotal);
+            remainingDiscount = roundMoney(remainingDiscount - lineDiscount);
+
+            return sum + roundMoney((lineSubtotals[index] - lineDiscount) * item.tax_rate / 100);
+        }, 0));
         const itemCount = items.reduce((sum, item) => sum + item.cartQuantity, 0);
         subtotalElement.textContent = currency.format(subtotal);
         taxElement.textContent = currency.format(tax);
-        totalElement.textContent = currency.format(subtotal + tax);
+        checkoutTotal = roundMoney(Math.max(0, subtotal - discount + tax));
+        totalElement.textContent = currency.format(checkoutTotal);
         itemCountElement.textContent = itemCount;
+        checkoutButton.disabled = items.length === 0 || isSubmitting;
+        if (paymentAmount && document.activeElement !== paymentAmount) {
+            paymentAmount.value = checkoutTotal.toFixed(2);
+        }
 
         cartLines.querySelectorAll('[data-quantity]').forEach((button) => {
             button.addEventListener('click', () => changeQuantity(button.dataset.quantity, Number(button.dataset.delta)));
@@ -152,10 +179,94 @@ function initializePos() {
 
     search.addEventListener('input', renderProducts);
     category.addEventListener('change', renderProducts);
+    discountType?.addEventListener('change', renderCart);
+    discountValue?.addEventListener('input', renderCart);
     clearButton.addEventListener('click', () => {
         cart.clear();
         renderCart();
     });
+    checkoutButton?.addEventListener('click', checkout);
+
+    async function checkout() {
+        if (cart.size === 0 || isSubmitting) {
+            return;
+        }
+
+        const selectedMethod = paymentMethod.selectedOptions[0];
+        const enteredAmount = Number(paymentAmount.value || 0);
+        const isCash = selectedMethod?.dataset.category === 'cash';
+        const appliedAmount = Math.min(enteredAmount, checkoutTotal);
+        const payments = appliedAmount > 0 ? [{
+            payment_method_id: paymentMethod.value,
+            amount: appliedAmount.toFixed(2),
+            amount_tendered: isCash ? enteredAmount.toFixed(2) : null,
+        }] : [];
+        const payload = {
+            shift_id: root.dataset.shiftId,
+            customer_id: customer.value || null,
+            items: [...cart.values()].map((item) => ({ product_id: item.id, quantity: String(item.cartQuantity) })),
+            payments,
+            discount_type: discountType.value,
+            discount_value: String(discountValue.value || 0),
+        };
+
+        isSubmitting = true;
+        renderCart();
+        showMessage('جارٍ حفظ الفاتورة...', 'pending');
+
+        try {
+            const response = await fetch(root.dataset.checkoutUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': root.dataset.csrfToken,
+                },
+                body: JSON.stringify(payload),
+            });
+            const body = await response.json();
+            if (! response.ok) {
+                const validationMessage = body.errors ? Object.values(body.errors).flat()[0] : null;
+                throw new Error(validationMessage || body.message || 'تعذر حفظ الفاتورة.');
+            }
+
+            [...cart.values()].forEach((item) => {
+                const product = products.find((candidate) => candidate.id === item.id);
+                if (product?.tracks_inventory) {
+                    product.quantity -= item.cartQuantity;
+                }
+            });
+            cart.clear();
+            discountType.value = 'none';
+            discountValue.value = '0';
+            showMessage(`تم حفظ الفاتورة ${body.data.invoice_number} بنجاح.`, 'success');
+            renderProducts();
+        } catch (error) {
+            showMessage(error.message, 'error');
+        } finally {
+            isSubmitting = false;
+            renderCart();
+        }
+    }
+
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.className = `mt-4 rounded-xl px-3 py-2 text-sm font-bold ${type === 'success' ? 'bg-emerald-50 text-emerald-800' : type === 'error' ? 'bg-red-50 text-red-800' : 'bg-amber-50 text-amber-800'}`;
+    }
+
     renderProducts();
     renderCart();
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function roundMoney(value) {
+    return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 }

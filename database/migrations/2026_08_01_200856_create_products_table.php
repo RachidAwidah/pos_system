@@ -21,8 +21,6 @@ return new class extends Migration
             $table->string('type')->default('stock')->index();
             $table->decimal('cost_price', 15, 2)->default(0);
             $table->decimal('price', 15, 2)->default(0);
-            $table->decimal('quantity', 15, 3)->default(0);
-            $table->decimal('reorder_level', 15, 3)->default(0);
             $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->foreignUuid('tax_id')->nullable()->constrained('taxes')->nullOnDelete();

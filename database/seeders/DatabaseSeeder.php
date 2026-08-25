@@ -4,8 +4,9 @@ namespace Database\Seeders;
 
 use App\Enums\ProductType;
 use App\Models\Category;
-use App\Models\Contact;
+use App\Models\Customer;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Models\Tax;
 use App\Models\Unit;
 use Illuminate\Database\Seeder;
@@ -21,6 +22,9 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             AdminSeeder::class,
             UnitSeeder::class,
+            PaymentMethodSeeder::class,
+            WarehouseSeeder::class,
+            RegisterSeeder::class,
         ]);
 
         $generalCategory = Category::query()->firstOrCreate(['category_name' => 'General']);
@@ -29,9 +33,9 @@ class DatabaseSeeder extends Seeder
         $standardTax = Tax::query()->firstOrCreate(['tax_name' => 'Standard Tax'], ['tax_percentage' => 10]);
         $pieceUnit = Unit::query()->where('symbol', 'pc')->firstOrFail();
 
-        Contact::query()->firstOrCreate(['name' => 'Walk-in Customer', 'type' => 'customer']);
-        Contact::query()->firstOrCreate(
-            ['name' => 'Main Supplier', 'type' => 'supplier'],
+        Customer::query()->firstOrCreate(['name' => 'Walk-in Customer']);
+        Supplier::query()->firstOrCreate(
+            ['name' => 'Main Supplier'],
             ['company_name' => 'Local Supplies'],
         );
 
@@ -42,8 +46,6 @@ class DatabaseSeeder extends Seeder
             'type' => ProductType::Stock,
             'cost_price' => 0.50,
             'price' => 1.00,
-            'quantity' => 20,
-            'reorder_level' => 5,
             'tax_id' => $zeroTax->id,
             'category_id' => $generalCategory->id,
         ]);
@@ -55,10 +57,14 @@ class DatabaseSeeder extends Seeder
             'type' => ProductType::Stock,
             'cost_price' => 1.25,
             'price' => 2.00,
-            'quantity' => 15,
-            'reorder_level' => 4,
             'tax_id' => $standardTax->id,
             'category_id' => $foodCategory->id,
         ]);
+
+        $this->call(InventoryBalanceSeeder::class);
+
+        if (config('pos.seed_demo_data')) {
+            $this->call(DemoPosSeeder::class);
+        }
     }
 }

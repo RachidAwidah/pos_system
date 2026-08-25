@@ -2,13 +2,17 @@
 
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\Web\AuthController;
-use App\Http\Controllers\Web\ContactController;
+use App\Http\Controllers\Web\CashSessionController;
+use App\Http\Controllers\Web\CustomerController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\OrderController;
+use App\Http\Controllers\Web\PosCheckoutController;
 use App\Http\Controllers\Web\PosController;
 use App\Http\Controllers\Web\ProductController;
+use App\Http\Controllers\Web\ReportController;
 use App\Http\Controllers\Web\RoleController;
 use App\Http\Controllers\Web\SettingController;
+use App\Http\Controllers\Web\SupplierController;
 use App\Http\Controllers\Web\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,9 +26,14 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/pos', PosController::class)->middleware('permission:sales.create')->name('pos.index');
+    Route::post('/pos/checkout', PosCheckoutController::class)->middleware('permission:sales.create')->name('pos.checkout');
+    Route::post('/pos/shifts', [CashSessionController::class, 'store'])->middleware('permission:shifts.open')->name('pos.shifts.store');
+    Route::post('/pos/shifts/{shift}/close', [CashSessionController::class, 'close'])->middleware('permission:shifts.close')->name('pos.shifts.close');
     Route::get('/products', [ProductController::class, 'index'])->middleware('permission:products.view')->name('products.index');
     Route::get('/orders', [OrderController::class, 'index'])->middleware('permission:sales.view')->name('orders.index');
-    Route::get('/contacts', [ContactController::class, 'index'])->middleware('permission:customers.view')->name('contacts.index');
+    Route::get('/reports', ReportController::class)->middleware('permission:reports.view_sales')->name('reports.index');
+    Route::get('/customers', [CustomerController::class, 'index'])->middleware('permission:customers.view')->name('customers.index');
+    Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('permission:suppliers.view')->name('suppliers.index');
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view')->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->middleware('permission:users.create')->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->middleware('permission:users.create')->name('users.store');

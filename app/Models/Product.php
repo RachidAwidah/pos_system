@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Enums\ProductType;
-use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,20 +14,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Table(name: 'products', key: 'id', keyType: 'string', incrementing: false)]
 #[Fillable([
-        'product_name',
-        'sku',
-        'barcode',
-        'unit_id',
-        'type',
-        'cost_price',
-        'price',
-        'quantity',
-        'reorder_level',
-        'description',
-        'image',
-        'tax_id',
-        'category_id',
-    ])]
+    'product_name',
+    'sku',
+    'barcode',
+    'unit_id',
+    'type',
+    'cost_price',
+    'price',
+    'description',
+    'image',
+    'tax_id',
+    'category_id',
+])]
 class Product extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
@@ -36,8 +34,6 @@ class Product extends Model
         'type' => ProductType::class,
         'cost_price' => 'decimal:2',
         'price' => 'decimal:2',
-        'quantity' => 'decimal:3',
-        'reorder_level' => 'decimal:3',
     ];
 
     public function unit(): BelongsTo
@@ -55,18 +51,38 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function orderDetails(): HasMany
+    public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderDetail::class);
+        return $this->hasMany(OrderItem::class);
     }
 
-    public function purchaseOrderDetails(): HasMany
+    public function purchaseOrderItems(): HasMany
     {
-        return $this->hasMany(PurchaseOrderDetail::class);
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function goodsReceiptItems(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptItem::class);
+    }
+
+    public function supplierProducts(): HasMany
+    {
+        return $this->hasMany(SupplierProduct::class);
     }
 
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovement::class);
+    }
+
+    public function inventoryBalances(): HasMany
+    {
+        return $this->hasMany(InventoryBalance::class);
+    }
+
+    public function inventoryCountItems(): HasMany
+    {
+        return $this->hasMany(InventoryCountItem::class);
     }
 }

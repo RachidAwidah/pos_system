@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\ProductType;
+use App\Models\InventoryBalance;
 use App\Models\Product;
+use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -23,6 +25,12 @@ class ProductCatalogStructureTest extends TestCase
         $this->assertSame('pc', $product->unit->symbol);
         $this->assertSame(ProductType::Stock, $product->type);
         $this->assertTrue($product->type->tracksInventory());
+
+        $balance = InventoryBalance::query()
+            ->whereBelongsTo($product)
+            ->whereBelongsTo(Warehouse::query()->where('code', 'MAIN')->firstOrFail())
+            ->firstOrFail();
+        $this->assertSame('20.000', $balance->quantity_on_hand);
     }
 
     public function test_catalog_schema_uses_units_and_products_for_services(): void
@@ -31,7 +39,10 @@ class ProductCatalogStructureTest extends TestCase
         $this->assertTrue(Schema::hasColumns('products', ['sku', 'barcode', 'unit_id', 'type']));
         $this->assertFalse(Schema::hasColumn('products', 'unit'));
         $this->assertFalse(Schema::hasColumn('products', 'is_stockable'));
+        $this->assertFalse(Schema::hasColumn('products', 'quantity'));
+        $this->assertFalse(Schema::hasColumn('products', 'reorder_level'));
+        $this->assertTrue(Schema::hasTable('inventory_balances'));
         $this->assertFalse(Schema::hasTable('services'));
-        $this->assertFalse(Schema::hasColumn('orders_details', 'service_id'));
+        $this->assertFalse(Schema::hasColumn('order_items', 'service_id'));
     }
 }
