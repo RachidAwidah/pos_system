@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ملخص التعديلات - POS Laravel</title>
+    <style>
+        body { font-family: Tahoma, Arial, sans-serif; margin: 24px; line-height: 1.8; background: #f8fafc; color: #0f172a; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+        h1, h2 { margin-top: 0; color: #1e293b; }
+        ul { margin: 0; padding-right: 20px; }
+        code { background: #f1f5f9; padding: 2px 6px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>ملخص سريع للشغل اللي انعمل</h1>
+        <p>هذا الملخص بيوضح شو تم تنفيذه عملياً على مشروع POS في Laravel.</p>
+    </div>
+
+    <div class="card">
+        <h2>1) تجهيز Factory + Seeder بشكل مناسب للـ POS</h2>
+        <ul>
+            <li>تعديل <code>UserFactory</code> ليتوافق مع حقول جدول المستخدمين الفعلية (<code>full_name</code> و <code>password_hash</code>).</li>
+            <li>إضافة Factories لعدة جداول (Category, Tax, Contact, Product, Service, Shift, Order, OrderDetail, Payment, PurchaseOrder, PurchaseOrderDetail, StockMovement, Role, Permission).</li>
+            <li>تحديث <code>DatabaseSeeder</code> لتوليد بيانات مترابطة وواقعية:
+                <ul>
+                    <li>Users + Roles + Permissions</li>
+                    <li>Suppliers + Customers</li>
+                    <li>Categories + Taxes + Products + Services</li>
+                    <li>Orders مع تفاصيلها والمدفوعات</li>
+                    <li>Purchase Orders مع التفاصيل وحركات المخزون</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>2) تجهيز Request + Resource (مثال عملي كامل)</h2>
+        <ul>
+            <li>إضافة Request للإنشاء: <code>StorePurchaseOrderDetailRequest</code>.</li>
+            <li>إضافة Request للتعديل: <code>UpdatePurchaseOrderDetailRequest</code>.</li>
+            <li>إضافة Resource للعرض المنظم: <code>PurchaseOrderDetailResource</code>.</li>
+            <li>إضافة Controller كامل CRUD: <code>PurchaseOrderDetailController</code>.</li>
+            <li>إضافة API Route: <code>Route::apiResource('purchase-order-details', ...)</code>.</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>3) ملاحظات مهمة</h2>
+        <ul>
+            <li>تم فحص الأخطاء عبر Problems وما ظهر أخطاء وقت التحقق.</li>
+            <li>ما كملنا تشغيل أوامر Artisan/Tests بسبب قيود البيئة الحالية (PowerShell غير متاح).</li>
+            <li>أول خطوة لما ترجع تكمل: شغّل seeding وتأكد من البيانات على قاعدة البيانات.</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>أوامر تنصح تنفذها لاحقاً عندك</h2>
+        <ul>
+            <li><code>php artisan migrate:fresh --seed</code></li>
+            <li><code>php artisan route:list</code></li>
+        </ul>
+    </div>
+</body>
+</html>

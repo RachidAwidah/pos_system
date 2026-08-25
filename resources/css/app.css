@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
+    --color-brand-50: #eefbf7;
+    --color-brand-100: #d5f5ea;
+    --color-brand-500: #10a37f;
+    --color-brand-600: #0b866a;
+    --color-brand-700: #096b57;
+}
+
+@layer base {
+    body {
+        @apply bg-slate-50 font-sans text-slate-900 antialiased;
+    }
+
+    button,
+    a,
+    input,
+    select {
+        @apply transition-colors;
+    }
+}
