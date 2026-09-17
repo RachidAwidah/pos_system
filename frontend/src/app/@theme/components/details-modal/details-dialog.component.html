@@ -1,0 +1,42 @@
+<nb-card class="details-dialog" [attr.aria-label]="title" role="dialog" aria-modal="true">
+  <nb-card-header class="details-dialog-header">
+    <span>{{ title }}</span>
+    <button nbButton ghost size="small" [disabled]="closeDisabled" [attr.aria-label]="'DETAILS_MODAL.CLOSE' | translate" (click)="close()">
+      <nb-icon icon="close-outline"></nb-icon>
+    </button>
+  </nb-card-header>
+  <nb-card-body class="details-dialog-body">
+    <ng-container *ngIf="contentTemplate">
+      <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+    </ng-container>
+    <ng-container *ngIf="!contentTemplate">
+      <ng-container *ngFor="let field of fields">
+        <div class="details-field" *ngIf="field.type !== 'table'">
+          <span class="field-label">{{ field.label }}</span>
+          <span class="field-value">{{ field.value ?? '—' }}</span>
+        </div>
+        <div class="details-table-section" *ngIf="field.type === 'table'">
+          <h4 class="table-title">{{ field.label }}</h4>
+          <div class="table-wrap" *ngIf="field.tableRows?.length">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th *ngFor="let header of field.tableHeaders">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of field.tableRows">
+                  <td *ngFor="let header of field.tableHeaders">{{ row[header] ?? '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="!field.tableRows?.length" class="empty-state">{{ 'DETAILS_MODAL.NO_DATA' | translate }}</div>
+        </div>
+      </ng-container>
+    </ng-container>
+  </nb-card-body>
+  <nb-card-footer *ngIf="showFooter" class="details-dialog-footer">
+    <button nbButton status="basic" (click)="close()">{{ 'DETAILS_MODAL.CLOSE' | translate }}</button>
+  </nb-card-footer>
+</nb-card>

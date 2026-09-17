@@ -1,0 +1,132 @@
+@import './@theme/styles/design-tokens';
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: $color-bg-page;
+}
+
+:host ::ng-deep nb-layout,
+:host ::ng-deep .layout,
+:host ::ng-deep .layout-container,
+:host ::ng-deep .content,
+:host ::ng-deep nb-layout-column {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.auth-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-card {
+  width: min(980px, 100%);
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-lg;
+  overflow: hidden;
+}
+
+.auth-illustration {
+  padding: 3rem 2.5rem;
+  background: linear-gradient(135deg, $color-primary-50, $color-primary-100);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: $color-primary-900;
+}
+
+.auth-illustration h1 {
+  font-size: 2.5rem;
+  font-weight: $font-weight-bold;
+  margin: 1rem 0 0.75rem;
+  color: $color-primary-800;
+}
+
+.auth-illustration p {
+  color: $color-primary-600;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin: 0;
+}
+
+.brand-badge {
+  width: max-content;
+  padding: 0.5rem 0.9rem;
+  border-radius: $radius-full;
+  background: $color-primary-500;
+  color: $color-text-inverse;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.12em;
+}
+
+.auth-form-panel {
+  background: $color-bg-card;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-header {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  display: inline-block;
+  background: $color-primary-50;
+  color: $color-primary-600;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  border-radius: $radius-full;
+  padding: 0.35rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.auth-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-label {
+  font-size: $font-size-base;
+  color: $color-text-secondary;
+  font-weight: $font-weight-semibold;
+}
+
+nb-alert {
+  margin-top: 0.2rem;
+}
+
+button[nbButton] {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 768px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-illustration {
+    min-height: 210px;
+    padding: 2rem 1.5rem;
+  }
+
+  .auth-form-panel {
+    padding: 1.5rem 1.2rem 2rem;
+  }
+}

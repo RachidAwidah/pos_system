@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>نظام نقطة البيع</title>
+
+  <base href="/">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script src="assets/runtime-config.js"></script>
+</head>
+<body>
+  <ngx-app>جارٍ تحميل نظام نقطة البيع...</ngx-app>
+
+  <style>
+    @keyframes pos-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pos-fade-in {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .pos-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1003;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      animation: pos-fade-in 0.3s ease-out;
+    }
+    .pos-loader-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: pos-spin 0.8s linear infinite;
+    }
+    .pos-loader-text {
+      font-family: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 0.875rem;
+      color: #94a3b8;
+      letter-spacing: 0.02em;
+    }
+  </style>
+  <div id="nb-global-spinner" class="pos-loader">
+    <div class="pos-loader-spinner"></div>
+    <div class="pos-loader-text">جارٍ التحميل...</div>
+  </div>
+
+</body>
+</html>

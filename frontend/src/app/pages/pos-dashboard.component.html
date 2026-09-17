@@ -1,0 +1,66 @@
+<div id="dashboard-export-area" class="pos-dashboard">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">{{ 'DASHBOARD.TITLE' | translate }}</span>
+      <h1>{{ 'DASHBOARD.SUBTITLE' | translate }}</h1>
+    </div>
+    <button nbButton status="primary" data-export-exclude (click)="exportDashboardImage()" [disabled]="loading || !overview || exportingImage">{{ exportingImage ? ('COMMON.EXPORTING_IMAGE' | translate) : ('DASHBOARD.EXPORT_DASHBOARD' | translate) }}</button>
+  </div>
+
+  <div *ngIf="loading" class="state">{{ 'DASHBOARD.LOADING' | translate }}</div>
+  <div *ngIf="errorMessage" class="state error">{{ errorMessage }}</div>
+
+  <div class="stats-grid">
+    <nb-card *ngFor="let item of stats" class="stat-card">
+      <nb-card-body>
+        <div class="stat-card__meta">
+          <span>{{ item.title }}</span>
+          <span class="trend" [ngClass]="item.tone === 'warning' ? 'warning' : 'positive'">{{ item.change }}</span>
+        </div>
+        <h2>{{ item.value }}</h2>
+      </nb-card-body>
+    </nb-card>
+  </div>
+
+  <div class="bottom-grid">
+    <nb-card class="wide-card">
+      <nb-card-header>{{ 'DASHBOARD.RECENT_ORDERS' | translate }} <button nbButton size="tiny" status="basic" (click)="exportRecentOrders()" [disabled]="!recentOrders.length">{{ 'DASHBOARD.EXPORT_EXCEL' | translate }}</button></nb-card-header>
+      <nb-card-body>
+        <table class="data-table" *ngIf="recentOrders.length">
+          <thead>
+            <tr>
+              <th>{{ 'DASHBOARD.TABLE_ORDER' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_CUSTOMER' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_AMOUNT' | translate }}</th>
+              <th>{{ 'DASHBOARD.TABLE_STATUS' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of recentOrders">
+              <td>{{ order.invoice_number }}</td>
+              <td>{{ order.customer?.name || ('DASHBOARD.CASH_CUSTOMER' | translate) }}</td>
+              <td>{{ order.final_amount | appCurrency }}</td>
+              <td>{{ order.payment_status }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div *ngIf="!recentOrders.length" class="state">{{ 'DASHBOARD.NO_ORDERS' | translate }}</div>
+        <div *ngIf="ordersError" class="state error">{{ ordersError }}</div>
+      </nb-card-body>
+    </nb-card>
+
+    <nb-card class="wide-card">
+      <nb-card-header>{{ 'DASHBOARD.TOP_PRODUCTS' | translate }}</nb-card-header>
+      <nb-card-body>
+        <div class="product-list" *ngFor="let product of overview?.top_products">
+          <div>
+            <strong>{{ product.product_name }}</strong>
+            <small>{{ 'DASHBOARD.SOLD_UNITS' | translate: { count: product.net_quantity } }}</small>
+          </div>
+          <span>{{ product.net_sales | appCurrency }}</span>
+        </div>
+        <div *ngIf="overview && !overview.top_products.length" class="state">{{ 'DASHBOARD.NO_PRODUCTS' | translate }}</div>
+      </nb-card-body>
+    </nb-card>
+  </div>
+</div>

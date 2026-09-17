@@ -1,0 +1,471 @@
+@import '../@theme/styles/design-tokens';
+@import '../@theme/styles/mixins';
+
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+  padding: $space-6;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-4;
+
+  h1 {
+    margin: 0.35rem 0 0;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+}
+
+.summary {
+  margin: 0.5rem 0 0;
+  color: $color-text-muted;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $color-primary-600;
+  background: rgba($color-primary-500, 0.12);
+  padding: 0.45rem 0.8rem;
+  border-radius: $radius-full;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-3;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.create-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: $space-4;
+}
+
+.product-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+
+  label {
+    margin: 0;
+    color: $color-text-secondary;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+  }
+
+  [nbInput],
+  select[nbInput] {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: $font-size-xs;
+    line-height: 1.5;
+  }
+
+  &--wide {
+    grid-column: 1 / -1;
+  }
+
+  textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: $space-3;
+  margin-top: $space-5;
+  padding-top: $space-4;
+  border-top: 1px solid $color-border-light;
+}
+
+.delete-error {
+  margin-top: 0.5rem;
+  max-width: 20rem;
+  white-space: normal;
+  color: $color-danger;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.category-create-form {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  flex-wrap: wrap;
+}
+
+.low-stock-filter {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  white-space: nowrap;
+  color: $color-text-secondary;
+}
+
+.catalog-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: $space-4;
+  align-items: start;
+}
+
+.category-card {
+  position: sticky;
+  top: $space-4;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  @include scrollbar-thin;
+}
+
+.category-heading {
+  margin-bottom: $space-4;
+  p {
+    margin: 0.35rem 0 0;
+    color: $color-text-muted;
+    font-size: $font-size-sm;
+  }
+}
+
+.category-tree,
+.category-children {
+  list-style: none;
+  margin: $space-3 0 0;
+  padding: 0;
+}
+
+.category-children {
+  margin: 0;
+  padding-right: $space-5;
+  border-right: 2px solid $color-border;
+  margin-top: 0.15rem;
+}
+
+.category-tree > li {
+  margin-bottom: 0.1rem;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  min-height: 2.4rem;
+  padding: 0.2rem $space-2;
+  border-radius: $radius-sm;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba($color-primary-500, 0.06);
+  }
+
+  &.selected {
+    background: rgba($color-primary-500, 0.12);
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.toggle,
+.toggle-placeholder {
+  width: 1.6rem;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+  border-radius: $radius-sm;
+  flex-shrink: 0;
+}
+
+.toggle {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba($color-primary-500, 0.1);
+    color: $color-primary-600;
+  }
+}
+
+.category-link {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-2;
+  border: 0;
+  background: transparent;
+  padding: 0.4rem 0.3rem;
+  text-align: right;
+  cursor: pointer;
+  color: $color-gray-700;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+  border-radius: $radius-sm;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: $color-primary-600;
+  }
+}
+
+.category-action {
+  border: 0;
+  background: transparent;
+  color: $color-primary-600;
+  cursor: pointer;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: $radius-sm;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba($color-primary-500, 0.1);
+  }
+
+  &.danger {
+    color: $color-danger;
+    &:hover {
+      background: rgba($color-danger, 0.1);
+    }
+  }
+}
+
+.count {
+  border-radius: $radius-full;
+  background: $color-gray-100;
+  padding: 0.1rem 0.45rem;
+  color: $color-text-muted;
+  font-size: 0.72rem;
+}
+
+.compact {
+  padding: $space-4 0;
+  font-size: $font-size-sm;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: right;
+    padding: 0.9rem 0.75rem;
+    border-bottom: 1px solid $color-border;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.unit {
+  color: $color-text-muted;
+  font-size: 0.85em;
+}
+
+.status {
+  display: inline-flex;
+  padding: 0.32rem 0.7rem;
+  border-radius: $radius-full;
+  font-weight: $font-weight-bold;
+  font-size: 0.74rem;
+
+  &.success {
+    background: $color-success-bg;
+    color: $color-success-dark;
+  }
+
+  &.warning {
+    background: $color-warning-bg;
+    color: $color-warning-dark;
+  }
+}
+
+.state {
+  padding: $space-8 $space-4;
+  text-align: center;
+  color: $color-text-muted;
+
+  &.error {
+    color: $color-danger;
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: $space-4;
+  padding-top: $space-4;
+}
+
+@media (max-width: 900px) {
+  .catalog-layout {
+    grid-template-columns: 1fr;
+  }
+  .category-card {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .search-bar {
+    flex-direction: column;
+    align-items: stretch;
+
+    .search-input {
+      min-width: 100%;
+    }
+  }
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .category-create-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .create-form {
+    grid-template-columns: 1fr;
+  }
+  .data-table {
+    min-width: 720px;
+  }
+  nb-card-body {
+    overflow-x: auto;
+  }
+  .form-actions {
+    flex-direction: column;
+
+    button[nbButton] {
+      width: 100%;
+    }
+  }
+}
+
+// ============================================================
+// :host ::ng-deep — OVERRIDE NEBULAR DEFAULTS
+// These work around global Nebular styles that break layout:
+// 1. nb-input { width: 100% } in _components.scss:215
+// 2. nb-card { overflow: hidden } in _components.scss:78
+// 3. nb-card-body { padding: $space-5 !important } in _components.scss:94
+// 4. nbButton .full-width { width: 100% } in _button-core.scss:25
+// ============================================================
+
+:host ::ng-deep {
+
+  // ---- SELECT DROPDOWN: Ocean Blue Theme ----
+  select,
+  select[nbInput] {
+    appearance: auto;
+    background-color: #fff;
+    border: 1.5px solid #0077B6;
+    border-radius: $radius-sm;
+    padding: 0.45rem 2rem 0.45rem 0.75rem;
+    font-size: $font-size-sm;
+    font-family: $font-family;
+    color: #023E8A;
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: left 0.75rem center;
+    cursor: pointer;
+    transition: border-color $transition-base, box-shadow $transition-base;
+
+    &:hover {
+      border-color: #00B4D8;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #0077B6;
+      box-shadow: 0 0 0 3px rgba(#0077B6, 0.18);
+    }
+  }
+
+  // FIX 1: Search bar input must NOT be width:100%.
+  .search-bar nb-input {
+    width: auto !important;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  // FIX 2: Category card must not clip tree children.
+  .category-card {
+    overflow: visible !important;
+  }
+
+  // FIX 3: Category card body must scroll independently.
+  .category-card nb-card-body {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    @include scrollbar-thin;
+  }
+
+  // FIX 4: Buttons inside table cells must stay horizontal.
+  .action-buttons button[nbButton] {
+    display: inline-flex !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  // FIX 5: Category create form inputs must not force full width.
+  .category-create-form nb-input {
+    width: auto !important;
+    flex: 1;
+    min-width: 150px;
+  }
+
+  // FIX 6: Filter section selects/inputs must not force full width.
+  .filters nb-input,
+  .filters select[nbInput] {
+    width: auto !important;
+  }
+
+  // FIX 7: Page header button must not expand.
+  .page-header button[nbButton] {
+    flex-shrink: 0;
+  }
+}

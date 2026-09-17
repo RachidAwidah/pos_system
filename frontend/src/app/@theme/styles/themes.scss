@@ -1,0 +1,96 @@
+// ============================================================
+// THEMES - Ocean Blue Theme for POS System
+// ============================================================
+
+// @nebular theming framework
+@import '@nebular/theme/styles/theming';
+// @nebular out of the box themes
+@import '@nebular/theme/styles/themes';
+
+// --- Default Theme (Ocean Blue) ---
+$nb-themes: nb-register-theme((
+  layout-padding-top: 2.25rem,
+
+  menu-item-icon-margin: 0 0.5rem 0 0,
+
+  card-height-tiny: 13.5rem,
+  card-height-small: 21.1875rem,
+  card-height-medium: 28.875rem,
+  card-height-large: 36.5625rem,
+  card-height-giant: 44.25rem,
+  card-margin-bottom: 1.875rem,
+  card-header-with-select-padding-top: 0.5rem,
+  card-header-with-select-padding-bottom: 0.5rem,
+
+  select-min-width: 6rem,
+
+  slide-out-background: #f0f4f8,
+  slide-out-shadow-color: 0 4px 14px 0 rgba(3, 4, 94, 0.1),
+  slide-out-shadow-color-rtl: 0 4px 14px 0 rgba(3, 4, 94, 0.1),
+), default, default);
+
+// --- Cosmic Theme (Ocean Blue Dark) ---
+$nb-themes: nb-register-theme((
+  layout-padding-top: 2.25rem,
+
+  menu-item-icon-margin: 0 0.5rem 0 0,
+
+  card-height-tiny: 13.5rem,
+  card-height-small: 21.1875rem,
+  card-height-medium: 28.875rem,
+  card-height-large: 36.5625rem,
+  card-height-giant: 44.25rem,
+  card-margin-bottom: 1.875rem,
+  card-header-with-select-padding-top: 0.5rem,
+  card-header-with-select-padding-bottom: 0.5rem,
+
+  select-min-width: 6rem,
+
+  slide-out-background: #03045E,
+  slide-out-shadow-color: 2px 0 8px rgba(0, 119, 182, 0.3),
+  slide-out-shadow-color-rtl: -2px 0 8px rgba(0, 119, 182, 0.3),
+), cosmic, cosmic);
+
+// --- Corporate Theme (Ocean Blue Professional) ---
+$nb-themes: nb-register-theme((
+  layout-padding-top: 2.25rem,
+
+  menu-item-icon-margin: 0 0.5rem 0 0,
+
+  card-height-tiny: 13.5rem,
+  card-height-small: 21.1875rem,
+  card-height-medium: 28.875rem,
+  card-height-large: 36.5625rem,
+  card-height-giant: 44.25rem,
+  card-margin-bottom: 1.875rem,
+  card-header-with-select-padding-top: 0.5rem,
+  card-header-with-select-padding-bottom: 0.5rem,
+
+  select-min-width: 6rem,
+
+  slide-out-background: linear-gradient(270deg, #f0f4f8 0%, #e8f4f8 100%),
+  slide-out-shadow-color: 0 4px 14px 0 rgba(3, 4, 94, 0.1),
+  slide-out-shadow-color-rtl: 0 4px 14px 0 rgba(3, 4, 94, 0.1),
+), corporate, corporate);
+
+// --- Dark Theme (Ocean Blue Midnight) ---
+$nb-themes: nb-register-theme((
+  layout-padding-top: 2.25rem,
+
+  menu-item-icon-margin: 0 0.5rem 0 0,
+
+  card-height-tiny: 13.5rem,
+  card-height-small: 21.1875rem,
+  card-height-medium: 28.875rem,
+  card-height-large: 36.5625rem,
+  card-height-giant: 44.25rem,
+  card-margin-bottom: 1.875rem,
+  card-header-with-select-padding-top: 0.5rem,
+  card-header-with-select-padding-bottom: 0.5rem,
+
+  select-min-width: 6rem,
+
+  slide-out-background: linear-gradient(270deg, #023E8A 0%, #03045E 100%),
+  slide-out-shadow-color: 0 4px 14px 0 rgba(0, 150, 199, 0.3),
+  slide-out-shadow-color-rtl: 0 4px 14px 0 rgba(0, 150, 199, 0.3),
+), dark, dark);

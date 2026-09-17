@@ -1,0 +1,162 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build frontend",
+			"type": "shell",
+			"command": "npm run build -- --configuration production",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Prepare frontend dirs",
+			"type": "shell",
+			"command": "mkdir src\\app\\core\\auth src\\app\\auth",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Prepare frontend dirs",
+			"type": "shell",
+			"command": "mkdir src\\app\\core\\auth; mkdir src\\app\\auth",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Prepare frontend dirs",
+			"type": "shell",
+			"command": "New-Item -ItemType Directory -Force -Path 'src/app/core/auth'; New-Item -ItemType Directory -Force -Path 'src/app/auth'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Prepare frontend dirs",
+			"type": "shell",
+			"command": "cmd /c \"mkdir src\\app\\core\\auth & mkdir src\\app\\auth\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build frontend",
+			"type": "shell",
+			"command": "npm run build -- --configuration production",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Build frontend",
+			"type": "shell",
+			"command": "npm run build -- --configuration production",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Validate build",
+			"type": "shell",
+			"command": "npm run build -- --configuration production",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"label": "Run Angular app",
+			"type": "shell",
+			"command": "npm start -- --host 0.0.0.0 --port 4200",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check local app",
+			"type": "shell",
+			"command": "cmd /c \"curl -I http://127.0.0.1:4200\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Angular app",
+			"type": "shell",
+			"command": "npm run build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run Angular dev server",
+			"type": "shell",
+			"command": "npm start -- --host 0.0.0.0 --port 4200",
+			"args": [],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Run frontend POS app",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm start -- --host 0.0.0.0 --port 4200",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Echo frontend check",
+			"type": "shell",
+			"command": "echo frontend-ready",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start Angular frontend",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm start -- --host 0.0.0.0 --port 4200",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Frontend Angular server",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm start -- --host 0.0.0.0 --port 4200",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "build products api integration",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "verify-category-ui-build",
+			"type": "shell",
+			"command": "npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-pagination-check",
+			"type": "shell",
+			"command": "npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

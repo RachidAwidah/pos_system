@@ -1,0 +1,48 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Enums\ProductType;
+use App\Models\InventoryBalance;
+use App\Models\Product;
+use App\Models\Warehouse;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
+
+class ProductCatalogStructureTest extends TestCase
+{
+    use DatabaseTransactions;
+
+    public function test_products_use_separate_sku_barcode_unit_and_type_fields(): void
+    {
+        $product = Product::query()
+            ->with('unit')
+            ->where('sku', 'SKU-001')
+            ->firstOrFail();
+
+        $this->assertSame('100000000001', $product->barcode);
+        $this->assertSame('pc', $product->unit->symbol);
+        $this->assertSame(ProductType::Stock, $product->type);
+        $this->assertTrue($product->type->tracksInventory());
+
+        $balance = InventoryBalance::query()
+            ->whereBelongsTo($product)
+            ->whereBelongsTo(Warehouse::query()->where('code', 'MAIN')->firstOrFail())
+            ->firstOrFail();
+        $this->assertSame('20.000', $balance->quantity_on_hand);
+    }
+
+    public function test_catalog_schema_uses_units_and_products_for_services(): void
+    {
+        $this->assertTrue(Schema::hasTable('units'));
+        $this->assertTrue(Schema::hasColumns('products', ['sku', 'barcode', 'unit_id', 'type']));
+        $this->assertFalse(Schema::hasColumn('products', 'unit'));
+        $this->assertFalse(Schema::hasColumn('products', 'is_stockable'));
+        $this->assertFalse(Schema::hasColumn('products', 'quantity'));
+        $this->assertFalse(Schema::hasColumn('products', 'reorder_level'));
+        $this->assertTrue(Schema::hasTable('inventory_balances'));
+        $this->assertFalse(Schema::hasTable('services'));
+        $this->assertFalse(Schema::hasColumn('order_items', 'service_id'));
+    }
+}

@@ -1,0 +1,27 @@
+// ============================================================
+// LAYOUT STYLES - Ocean Blue Theme
+// ============================================================
+
+@mixin ngx-layout() {
+  @include media-breakpoint-down(is) {
+    .row {
+      margin-left: -10px;
+      margin-right: -10px;
+    }
+  }
+
+  // Global layout transitions
+  .layout-container {
+    transition: background-color $transition-base;
+  }
+
+  // Content area transitions
+  .content-container {
+    transition: all $transition-base;
+  }
+
+  // Sidebar transitions
+  nb-sidebar {
+    transition: all $transition-base;
+  }
+}

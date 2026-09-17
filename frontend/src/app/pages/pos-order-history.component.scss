@@ -1,0 +1,167 @@
+@import '../@theme/styles/design-tokens';
+@import '../@theme/styles/mixins';
+
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+  padding: $space-6;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h1 {
+  margin: 0.35rem 0 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.eyebrow {
+  color: $color-primary-600;
+  font-weight: $font-weight-bold;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: right;
+    padding: 0.85rem 0.65rem;
+    border-bottom: 1px solid $color-border;
+  }
+}
+
+.detail-header,
+.detail-meta,
+.totals,
+.pagination {
+  display: flex;
+  gap: $space-4;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.detail-header {
+  justify-content: space-between;
+}
+
+.detail-meta {
+  color: $color-text-secondary;
+  margin-bottom: $space-4;
+}
+
+.totals {
+  justify-content: flex-end;
+  margin-top: $space-4;
+  color: $color-text-secondary;
+
+  strong {
+    color: $color-text-primary;
+  }
+}
+
+.return-box {
+  border-top: 1px solid $color-border;
+  margin-top: $space-6;
+  padding-top: $space-4;
+
+  h3 {
+    margin-top: 0;
+  }
+}
+
+.return-fields {
+  display: flex;
+  gap: $space-3;
+  flex-wrap: wrap;
+  margin: $space-4 0;
+
+  input,
+  select {
+    min-width: 180px;
+  }
+}
+
+.state {
+  padding: $space-8 $space-4;
+  text-align: center;
+  color: $color-text-muted;
+}
+
+.error {
+  color: $color-danger;
+}
+
+.cash-refund-alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: $space-3;
+  font-size: $font-size-sm;
+  color: #023E8A;
+  background: linear-gradient(135deg, #e0f7fa, #e3f2fd);
+  border: 1px solid #00B4D8;
+  border-radius: $radius-sm;
+}
+
+.pagination {
+  justify-content: center;
+  padding-top: $space-4;
+}
+
+@media (max-width: 700px) {
+  .data-table {
+    min-width: 760px;
+  }
+  nb-card-body {
+    overflow-x: auto;
+  }
+}
+
+// ============================================================
+// :host ::ng-deep — SELECT & SEARCH FIXES
+// ============================================================
+
+:host ::ng-deep {
+
+  // ---- SELECT DROPDOWN: Ocean Blue Theme ----
+  select,
+  select[nbInput] {
+    appearance: auto;
+    background-color: #fff;
+    border: 1.5px solid #0077B6;
+    border-radius: $radius-sm;
+    padding: 0.45rem 2rem 0.45rem 0.75rem;
+    font-size: $font-size-sm;
+    font-family: $font-family;
+    color: #023E8A;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230077B6' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 0.75rem center;
+    cursor: pointer;
+    transition: border-color $transition-base, box-shadow $transition-base;
+
+    &:hover {
+      border-color: #00B4D8;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #0077B6;
+      box-shadow: 0 0 0 3px rgba(#0077B6, 0.18);
+    }
+  }
+
+  .return-fields select[nbInput] {
+    width: auto !important;
+  }
+
+  .pagination select[nbInput] {
+    width: auto !important;
+  }
+}

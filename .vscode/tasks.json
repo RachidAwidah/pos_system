@@ -1,0 +1,261 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-roles",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-returns",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-supplier-payments",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build-customer-payments",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Start Laravel API",
+			"type": "shell",
+			"command": "cd backend && php artisan serve --host=127.0.0.1 --port=8000",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start Laravel API",
+			"type": "shell",
+			"command": "Set-Location backend; php artisan serve --host=127.0.0.1 --port=8000",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start Laravel API 2",
+			"type": "shell",
+			"command": "Set-Location backend; php artisan serve --host=127.0.0.1 --port=8000",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "backend-integration-probe-unique",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan about",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "backend-serve-unique",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan serve --host=127.0.0.1 --port=8000",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "frontend-serve-unique",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm start -- --host 127.0.0.1 --port 4200",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "frontend-build-unique",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "backend-validation-command",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan test --without-tty",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "backend-tests-after-fix",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan test --without-tty",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "find-open-shift",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute=\"App\\Models\\Shift::where('status','open')->get(['id','register_id','user_id','opening_cash','status'])->each(fn($s)=>dump($s->toArray()));\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "find-open-shift-2",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute \"dump(App\\Models\\Shift::where(\\\"status\\\",\\\"open\\\")->get([\\\"id\\\",\\\"register_id\\\",\\\"user_id\\\",\\\"status\\\"])->toArray());\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "find-open-shift-3",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute \"dump(App\\Models\\Shift::where('status','open')->get());\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "inspect-open-shift-db",
+			"type": "shell",
+			"command": "mysql -h 127.0.0.1 -P 3306 -u root -p211320 -D pos_system -e \"SELECT id,register_id,user_id,status,opening_cash FROM shifts WHERE status='open';\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "inspect-open-shift-db-2",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute=\"dump`(App\\Models\\Shift::where`('status','open'`)->pluck`('id'`)->all`(`);\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "inspect-shifts-table",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan db:table shifts",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "query-open-shift-pdo",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php -r '$pdo=new PDO(\"mysql:host=127.0.0.1;dbname=pos_system\", \"root\", \"211320\"); foreach($pdo->query(\"SELECT id,register_id,status FROM shifts WHERE status=\\\"open\\\"\") as $r) echo $r[\"id\"].\"|\".$r[\"register_id\"].\"|\".$r[\"status\"].PHP_EOL;'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "verify-category-ui-build-2",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "query-active-shift-final",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute='dump(App\\Models\\Shift::where(\"status\",\"open\")->get()->toArray());'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "query-shifts-json-final",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute='echo App\\Models\\Shift::all()->toJson();'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "get-active-shift-id",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute='echo App\\Models\\Shift::whereStatus(implode(\"\",[111,112,101,110]))->first()->id;'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "get-active-shift-id-2",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan tinker --execute='echo App\\Models\\Shift::whereStatus(chr(111).chr(112).chr(101).chr(110))->first()->id;'",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "final-frontend-build",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "pagination-build-check",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "customer-invoice-pagination-build",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "pos-pagination-route-check",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan route:list --path=v1/pos",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "pos-pagination-frontend-build",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "category-management-build",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "category-route-check-final",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\backend\"; php artisan route:list --path=v1/categories",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "direct-pagination-build",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "pagination-final-build",
+			"type": "shell",
+			"command": "Set-Location \"C:\\Users\\HP\\Desktop\\pos_system\\frontend\"; npm run build",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

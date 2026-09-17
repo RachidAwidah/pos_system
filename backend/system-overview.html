@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظرة فنية ومهنية على النظام الحالي</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe3ee;
+      --accent: #2563eb;
+      --accent2: #0f766e;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.8;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+    .hero, .card, .erd-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      padding: 20px 22px;
+      margin-bottom: 18px;
+    }
+    .hero {
+      background: linear-gradient(135deg, #eff6ff, #f8fafc);
+      border-color: #bfdbfe;
+    }
+    h1, h2, h3 { margin-top: 0; color: #111827; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+    h3 { font-size: 18px; }
+    .pill {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      margin-left: 6px;
+      margin-bottom: 8px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .small { font-size: 14px; color: var(--muted); }
+    ul { padding-right: 18px; }
+    li { margin-bottom: 6px; }
+    code {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 13px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+    }
+    .erd-card pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .note {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #9a2c00;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: right;
+      vertical-align: top;
+    }
+    th { background: #f8fafc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>نظرة فنية ومهنية على النظام الحالي</h1>
+      <p>
+        هذا المشروع عبارة عن <strong>نظام Point of Sale (POS)</strong> مبني على Laravel، ومهمته الأساسية هي إدارة
+        <strong>المبيعات</strong>، <strong>المخزون</strong>، <strong>العملاء/الموردين</strong>، <strong>المستخدمين</strong>، و<strong>الطلبات</strong>.
+      </p>
+      <p class="small">
+        الهدف هنا ليس شرح الواجهة فقط، بل شرح البنية المنطقية للنظام وكيفية تنظيم البيانات داخله.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>1) الفكرة العامة للنظام</h2>
+      <p>ببساطة، النظام يعمل كـ “مخزن/متجر رقمي” يحتوي على هذه المكونات:</p>
+      <ul>
+        <li><strong>المستخدمون</strong>: من يشتغل على النظام؟</li>
+        <li><strong>الأدوار والصلاحيات</strong>: من يملك صلاحية ماذا؟</li>
+        <li><strong>المنتجات والخدمات</strong>: ما الذي يتم بيعه؟</li>
+        <li><strong>الطلبات</strong>: كيف يتم تسجيل بيع أو شراء؟</li>
+        <li><strong>المخزون</strong>: هل الكمية زادت أم نقصت؟</li>
+        <li><strong>السجلات</strong>: ما الذي حصل ومتى؟</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2) الطبقات الأساسية في النظام</h2>
+      <div class="grid">
+        <div>
+          <h3>أ) طبقة المستخدمين والأدوار</h3>
+          <ul>
+            <li><code>users</code>: المستخدمون المسجلون في النظام</li>
+            <li><code>roles</code>: الأدوار مثل المدير أو الموظف</li>
+            <li><code>permissions</code>: الصلاحيات</li>
+            <li><code>user_role</code> و <code>role_permission</code>: جداول وسيطة تربط المستخدمين بالأدوار والصلاحيات</li>
+          </ul>
+        </div>
+        <div>
+          <h3>ب) طبقة العملاء والموردين</h3>
+          <ul>
+            <li><code>contacts</code>: الأشخاص أو الشركات التي تتعامل مع النظام</li>
+            <li>قد يكون هذا <strong>عميلًا</strong> أو <strong>موردًا</strong></li>
+          </ul>
+        </div>
+        <div>
+          <h3>ج) طبقة السلع والخدمات</h3>
+          <ul>
+            <li><code>categories</code>: تصنيف المنتجات</li>
+            <li><code>products</code>: السلع الفعلية</li>
+            <li><code>services</code>: الخدمات إن وجدت</li>
+            <li><code>taxes</code>: الضرائب المطبقة</li>
+          </ul>
+        </div>
+        <div>
+          <h3>د) طبقة المبيعات والمشتريات</h3>
+          <ul>
+            <li><code>orders</code>: الطلبات</li>
+            <li><code>orders_details</code>: تفاصيل الطلب</li>
+            <li><code>payments</code>: الدفع</li>
+            <li><code>purchase_orders</code>: أوامر الشراء</li>
+            <li><code>purchase_order_details</code>: تفاصيل أوامر الشراء</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3) كيف يعمل flujo البيع في النظام</h2>
+      <ol>
+        <li>المستخدم يدخل إلى النظام ويبدأ <strong>شيفت</strong> عمل.</li>
+        <li>يضيف <strong>طلب بيع</strong> مرتبطًا بالعميل والمستخدم والشيفت.</li>
+        <li>يضيف عناصر الطلب مثل المنتج أو الخدمة مع الكمية والسعر.</li>
+        <li>يتم تسجيل الدفع في جدول <code>payments</code>.</li>
+        <li>يتم تحديث المخزون عبر <code>stock_movements</code>.</li>
+        <li>يتم حفظ كل النشاط في <code>audit_logs</code>.</li>
+      </ol>
+      <div class="note">
+        هذا هو “السيناريو الأساسي” للنظام: المستخدم → طلب → عناصر الطلب → دفع → تحديث المخزون.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4) كيف ترتبط الجداول ببعضها</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>الجدول</th>
+            <th>العلاقة</th>
+            <th>السبب</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>orders</code></td>
+            <td>يرتبط بـ <code>users</code>, <code>contacts</code>, <code>shifts</code></td>
+            <td>لأن الطلب يُسجل من قبل مستخدم، لصالح عميل، خلال شيفت معين</td>
+          </tr>
+          <tr>
+            <td><code>orders_details</code></td>
+            <td>يرتبط بـ <code>orders</code>, <code>products</code>, <code>services</code></td>
+            <td>لإضافة عناصر الطلب</td>
+          </tr>
+          <tr>
+            <td><code>payments</code></td>
+            <td>يرتبط بـ <code>orders</code>, <code>contacts</code></td>
+            <td>للتسجيل المالي للطلب</td>
+          </tr>
+          <tr>
+            <td><code>purchase_orders</code></td>
+            <td>يرتبط بـ <code>users</code>, <code>contacts</code></td>
+            <td>لتمثيل أوامر الشراء من موردين</td>
+          </tr>
+          <tr>
+            <td><code>stock_movements</code></td>
+            <td>يرتبط بـ <code>products</code>, <code>orders</code>, <code>purchase_orders</code>, <code>users</code></td>
+            <td>لتتبع كل حركة مخزون</td>
+          </tr>
+          <tr>
+            <td><code>products</code></td>
+            <td>يرتبط بـ <code>categories</code>, <code>taxes</code></td>
+            <td>لأن كل منتج له فئة وضريبة</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="erd-card">
+      <h2>5) ERD مبسط (رسم العلاقات)</h2>
+      <pre>
++------------------+         +------------------+
+| users            |         | roles            |
+|------------------|         |------------------|
+| id               | 1     * | id               |
+| full_name        |<-------->| role_name        |
+| email            |         +------------------+
+| password_hash    |
++--------+---------+
+         |
+         | 1
+         |      +------------------+
+         |      | user_role        |
+         |      |------------------|
+         |      | user_id          |
+         |      | role_id          |
+         |      +------------------+
+         |
+         v
++------------------+         +------------------+
+| contacts         |         | categories       |
+|------------------|         |------------------|
+| id               |         | id               |
+| name             |         | category_name    |
+| company_name     |         +------------------+
+| email            |
+| type             |
++--------+---------+
+         |
+         v
++------------------+         +------------------+
+| shifts           |         | taxes            |
+|------------------|         |------------------|
+| id               |         | id               |
+| user_id          |         | tax_name         |
+| start_time       |         | tax_percentage   |
+| end_time         |         +------------------+
+| starting_cash    |
++------------------+
+         |
+         v
++------------------+
+| orders           |
+|------------------|
+| id               |
+| user_id          |
+| contact_id       |
+| shift_id         |
+| total_amount     |
+| final_amount     |
+| payment_status   |
++------------------+
+         |
+         | 1
+         | *
++------------------+         +------------------+
+| orders_details   |         | payments         |
+|------------------|         |------------------|
+| id               |         | id               |
+| order_id         |         | order_id         |
+| product_id       |         | contact_id       |
+| service_id       |         | amount_paid      |
+| quantity         |         | payment_method   |
+| unit_price       |         +------------------+
+| subtotal         |
++------------------+
+
++------------------+         +------------------+
+| products         |         | services         |
+|------------------|         |------------------|
+| id               |         | id               |
+| product_name     |         | service_name     |
+| tax_id           |         | price            |
+| category_id      |         | tax_id           |
++------------------+         +------------------+
+
++------------------+         +------------------+
+| purchase_orders  |         | stock_movements  |
+|------------------|         |------------------|
+| id               |         | id               |
+| user_id          |         | product_id       |
+| supplier_id      |         | order_id         |
+| total_cost       |         | purchase_order_id|
+| status           |         | quantity_changed |
++------------------+         +------------------+
+      </pre>
+    </div>
+
+    <div class="card">
+      <h2>6) ما الذي يوجد في المشروع الآن فعليًا</h2>
+      <ul>
+        <li>مهاجرات قاعدة بيانات جاهزة</li>
+        <li>Models جاهزة لتمثيل الجداول</li>
+        <li>بنية Laravel أساسية جاهزة</li>
+        <li>لكن لا تزال الواجهة والعمليات التشغيلية في طور البناء</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>7) الخلاصة</h2>
+      <p>
+        النظام الحالي ليس مجرد “واجهة”، بل هو <strong>بنية بيانات منطقية</strong> كاملة لبيئة POS.
+        إذا فهمت هذه البنية، فستفهم بسهولة كيف يشتغل النظام لاحقًا عند إضافة الصفحات والعمليات.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

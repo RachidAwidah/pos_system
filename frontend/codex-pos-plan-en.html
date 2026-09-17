@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>POS Development and Testing Plan</title>
+<style>
+body{font-family:Arial,sans-serif;line-height:1.7;color:#172033;margin:40px}
+h1{color:#1456a0;border-bottom:2px solid #1456a0;padding-bottom:10px}
+h2{color:#1456a0;margin-top:28px}
+pre{direction:ltr;text-align:left;white-space:pre-wrap;background:#f4f6f8;border:1px solid #d8dee8;border-radius:8px;padding:18px;font:13px Consolas,monospace}
+.note{background:#eef6ff;border-left:4px solid #1456a0;padding:12px}
+</style>
+</head>
+<body>
+<h1>Codex Prompt: Complete POS Development and Testing</h1>
+<div class="note">Copy the complete text inside the box into Codex.</div>
+<pre>You are working on a complete POS project located at:
+
+C:\Users\HP\Desktop\pos_system
+
+Frontend:
+C:\Users\HP\Desktop\pos_system\frontend
+
+Backend:
+C:\Users\HP\Desktop\pos_system\backend
+
+Goal: continue developing and actually testing the project, not just making cosmetic frontend improvements. The project uses a Laravel backend and an Angular 15 + ngx-admin/Nebular frontend.
+
+Local URLs:
+Backend: http://127.0.0.1:8000
+Frontend: http://127.0.0.1:4200
+
+Before making changes:
+1. Inspect the actual files and current implementation.
+2. Read frontend/.agents/skills/pos-frontend-workstyle/references/project-memory.md.
+3. Inspect existing changes and never delete user changes.
+4. Follow the current project conventions and do not add libraries unless necessary.
+5. Connect every feature to the real API.
+6. Run the appropriate checks after every phase and record the results.
+
+Already completed:
+- Login is connected to Laravel Sanctum.
+- Products, inventory, customers, suppliers, sales, purchases, invoices, returns, users, roles, and reports exist.
+- Multi-level categories are supported, including creation, editing, moving, deletion, and invalid-move protection.
+- Pagination with configurable page size exists in the main lists.
+- POS products support progressive loading.
+- A real sale, return, refund, and customer payment were tested.
+- An optional-date Laravel test issue was fixed.
+- Reports work with real sales data.
+- Excel-compatible export was added for operational lists.
+- Reports and the dashboard can be exported as PNG images.
+
+Step 4: Payments and purchasing
+1. Inspect all customer and supplier payment endpoints.
+2. Add a supplier payment history showing date, amount, payment method, reference, notes, and balance when available.
+3. Ensure the customer payment history is clearly displayed.
+4. Test the complete purchasing workflow:
+   - Create a purchase order.
+   - Send the order.
+   - Receive goods partially and fully.
+   - Update inventory.
+   - Update the supplier balance.
+   - Record a supplier payment.
+5. Use real Demo data for testing and remove temporary data that should not remain.
+
+Step 5: UX and user feedback
+1. Add clear Arabic success and error messages for save, edit, delete, sale, return, and payment operations.
+2. Prevent duplicate submissions while an operation is running.
+3. Add loading, empty, and error states where needed.
+4. Review RTL support, small screens, wide tables, action buttons, and pagination.
+5. Do not randomly change the visual identity or replace ngx-admin/Nebular entirely.
+
+Step 6: Production readiness
+1. Inspect environment.ts, environment.prod.ts, and the API URL configuration.
+2. Inspect CORS and Sanctum configuration.
+3. Inspect migrations, seeders, and Demo data.
+4. Ensure the application does not depend on hard-coded IDs.
+5. Check session expiration, 401 handling, permissions, and route guards.
+6. Run:
+   npm run build
+   npm run build:prod
+   php artisan test
+7. Do not modify tests merely to make them pass.
+
+Required integration tests:
+1. Login and dashboard loading.
+2. A report for a period containing sales.
+3. Open or reuse an open shift.
+4. Sell a stock product and a tax-enabled product.
+5. Verify inventory changes after a sale.
+6. Test credit sale if supported.
+7. Record a customer payment.
+8. Create a return and process a refund.
+9. Create and send a purchase order.
+10. Receive goods partially and fully and verify inventory.
+11. Record a supplier payment and verify the balance.
+12. Test pagination and page-size changes.
+13. Test Excel export for every list.
+14. Test report image export.
+15. Test limited-user permissions if possible.
+16. Run Angular diagnostics/build and Laravel tests.
+
+Important rules:
+- Do not use fake data instead of the real API.
+- Do not delete existing changes.
+- Avoid any and unnecessary type casts.
+- Do not add broad catches or silent fallbacks.
+- A button is not considered a completed feature; test the feature actually.
+- If an endpoint is missing, add it consistently with the existing Laravel structure.
+- Use apply_patch for manual code edits.
+- Run diagnostics after each group of changes.
+
+At the end, provide a report containing:
+1. Changed files.
+2. Completed features.
+3. Operations actually executed.
+4. Laravel test results.
+5. Angular build results.
+6. Remaining issues.
+7. Recommended next step.</pre>
+</body>
+</html>

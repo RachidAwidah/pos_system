@@ -1,0 +1,26 @@
+@import '../@theme/styles/themes';
+@import '../@theme/styles/design-tokens';
+@import '../@theme/styles/mixins';
+
+:host {
+  display: block;
+  direction: rtl;
+}
+
+@include nb-install-component() {
+  ::ng-deep router-outlet + * {
+    display: block;
+    animation: page-enter 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+    @keyframes page-enter {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+}

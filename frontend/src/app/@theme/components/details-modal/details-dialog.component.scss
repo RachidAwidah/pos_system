@@ -1,0 +1,170 @@
+@import '../../styles/design-tokens';
+@import '../../styles/mixins';
+
+:host { display: block; min-width: 0; }
+
+// TemplateRef content keeps its declaring component's attributes. Keep shared
+// rules below the dialog boundary so they reach that content without leaking.
+:host ::ng-deep .details-dialog {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 680px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  margin: 0;
+  background: #fff;
+  color: #0f172a;
+  font-family: $font-family;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.16) !important;
+  overflow: hidden;
+
+  .details-dialog-header,
+  .details-dialog-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    padding: 16px 24px !important;
+    background: #fff;
+    color: #0f172a;
+  }
+  .details-dialog-header {
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 18px;
+    font-weight: 600;
+    span { min-width: 0; overflow-wrap: anywhere; }
+    button { flex-shrink: 0; }
+  }
+  .details-dialog-footer {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+  }
+  .details-dialog-body {
+    min-height: 0;
+    padding: 24px !important;
+    overflow: auto;
+    overscroll-behavior: contain;
+    @include scrollbar-thin;
+  }
+  .form-grid, .create-form, .return-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0 0 20px;
+    padding: 0;
+    > * { min-width: 0; }
+  }
+  .form-grid > label, .product-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .dialog-field-wide { grid-column: 1 / -1; }
+  label { text-align: start; }
+  small { color: #64748b; font-weight: 400; line-height: 1.5; }
+  input[nbInput], select, textarea[nbInput], nb-select {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  input[nbInput], select, textarea[nbInput], nb-select .select-button {
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    line-height: 1.5;
+    &:disabled { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+    &:focus { outline: 2px solid #0077b6; outline-offset: 2px; border-color: #0077b6; }
+    &[aria-invalid='true'], &.ng-invalid.ng-touched { border-color: #dc2626; }
+  }
+  textarea[nbInput] { min-height: 96px; resize: vertical; }
+  input[type='number'], input[type='email'], input[type='tel'],
+  #product-sku, #product-barcode { direction: ltr; text-align: start; }
+  input[type='checkbox'] { width: 18px; height: 18px; accent-color: #0077b6; }
+  button[nbButton] {
+    min-height: 44px;
+    border-radius: 8px;
+    white-space: normal;
+    line-height: 1.4;
+    &:focus-visible { outline: 2px solid #0077b6; outline-offset: 2px; }
+    &:disabled { cursor: not-allowed; }
+  }
+  .form-actions {
+    position: sticky;
+    bottom: -24px;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    flex-direction: row;
+    margin: 20px -24px -24px;
+    padding: 16px 24px !important;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+  }
+  .details-field {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) minmax(0, 2fr);
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+    .field-label { color: #475569; font-weight: 600; }
+    .field-value { text-align: start; overflow-wrap: anywhere; }
+  }
+  .details-table-section, .return-box, .payment-details { margin-top: 24px; }
+  .table-title, h3 { color: #0f172a; font-size: 16px; line-height: 1.5; }
+  .table-wrap { max-width: 100%; overflow-x: auto; }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    th, td { padding: 12px; text-align: start; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; color: #475569; font-weight: 600; }
+    td { color: #0f172a; }
+    input[nbInput] { min-width: 90px; }
+  }
+  .balance-summary, .totals, .detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #334155;
+  }
+  .account-header, .invoice-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .state, .empty-state { padding: 16px; color: #64748b; overflow-wrap: anywhere; }
+  .state.error { color: #b91c1c; background: #fef2f2; border-radius: 8px; margin-block: 16px; }
+
+  @media (max-width: 600px) {
+    .details-dialog-header, .details-dialog-body, .details-dialog-footer { padding: 16px !important; }
+    .form-grid, .create-form, .return-fields, .details-field { grid-template-columns: minmax(0, 1fr); }
+    .form-actions { bottom: -16px; margin-inline: -16px; margin-bottom: -16px; padding: 16px; }
+    .form-actions button { flex: 1 1 120px; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host ::ng-deep .details-dialog {
+    &, *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+}

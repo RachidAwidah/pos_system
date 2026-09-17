@@ -1,0 +1,586 @@
+// ============================================================
+// SHARED MIXINS - Reusable patterns for POS System
+// Ocean Blue Theme - Professional Design System
+// ============================================================
+
+@import 'design-tokens';
+
+// ============================================================
+// CORE MIXINS
+// ============================================================
+
+// --- Smooth Transition ---
+@mixin transition($properties...) {
+  $result: ();
+  @each $prop in $properties {
+    @if $prop == 'all' {
+      $result: append($result, all $transition-base, comma);
+    } @else if $prop == 'fast' {
+      $result: append($result, all $transition-fast, comma);
+    } @else if $prop == 'slow' {
+      $result: append($result, all $transition-slow, comma);
+    } @else if $prop == 'bounce' {
+      $result: append($result, all $transition-bounce, comma);
+    } @else {
+      $result: append($result, $prop $transition-base, comma);
+    }
+  }
+  transition: $result;
+}
+
+// --- Flex Center ---
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// --- Flex Between ---
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// --- Flex Start ---
+@mixin flex-start {
+  display: flex;
+  align-items: flex-start;
+}
+
+// --- Responsive Breakpoints ---
+@mixin responsive($breakpoint) {
+  @if $breakpoint == 'mobile' {
+    @media (max-width: 480px) { @content; }
+  } @else if $breakpoint == 'mobile-lg' {
+    @media (max-width: 576px) { @content; }
+  } @else if $breakpoint == 'tablet' {
+    @media (max-width: 768px) { @content; }
+  } @else if $breakpoint == 'tablet-lg' {
+    @media (max-width: 992px) { @content; }
+  } @else if $breakpoint == 'desktop' {
+    @media (max-width: 1200px) { @content; }
+  } @else if $breakpoint == 'desktop-lg' {
+    @media (max-width: 1400px) { @content; }
+  } @else if $breakpoint == 'mobile-up' {
+    @media (min-width: 480px) { @content; }
+  } @else if $breakpoint == 'tablet-up' {
+    @media (min-width: 768px) { @content; }
+  } @else if $breakpoint == 'desktop-up' {
+    @media (min-width: 1200px) { @content; }
+  }
+}
+
+// --- Glass Effect (Glassmorphism) ---
+@mixin glass-effect($blur: 12px, $opacity: 0.85) {
+  background: rgba(255, 255, 255, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(3, 4, 94, 0.1);
+}
+
+// --- Glass Effect Dark ---
+@mixin glass-effect-dark($blur: 12px, $opacity: 0.9) {
+  background: rgba(3, 4, 94, $opacity);
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+// --- Hover Lift ---
+@mixin hover-lift($distance: -4px, $shadow: $shadow-lg) {
+  transition: transform $transition-base, box-shadow $transition-base;
+
+  &:hover {
+    transform: translateY($distance);
+    box-shadow: $shadow;
+  }
+
+  &:active {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+// --- Hover Scale ---
+@mixin hover-scale($scale: 1.02) {
+  transition: transform $transition-base, box-shadow $transition-base;
+
+  &:hover {
+    transform: scale($scale);
+    box-shadow: $shadow-lg;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// --- Focus Ring ---
+@mixin focus-ring($color: $color-primary-base, $offset: 2px) {
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 $offset rgba($color, 0.3);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color;
+    outline-offset: 2px;
+  }
+}
+
+// ============================================================
+// COMPONENT MIXINS
+// ============================================================
+
+// --- Scrollbar (use inside a selector) ---
+@mixin scrollbar-thin {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: $color-gray-300;
+    border-radius: $radius-full;
+    &:hover {
+      background: $color-gray-400;
+    }
+  }
+}
+
+// --- Badge ---
+@mixin badge($bg, $color: $color-text-inverse) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.65rem;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-full;
+  background: $bg;
+  color: $color;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+// --- Status Badge ---
+@mixin status-badge($type) {
+  @if $type == 'success' {
+    @include badge($color-success-bg, $color-success-dark);
+  } @else if $type == 'warning' {
+    @include badge($color-warning-bg, $color-warning-dark);
+  } @else if $type == 'danger' {
+    @include badge($color-danger-bg, $color-danger-dark);
+  } @else if $type == 'info' {
+    @include badge($color-info-bg, $color-primary-dark);
+  } @else if $type == 'muted' {
+    @include badge($color-gray-100, $color-gray-600);
+  }
+}
+
+// --- Page Shell ---
+@mixin page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+  padding: $space-6;
+  direction: rtl;
+}
+
+// --- Page Header ---
+@mixin page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $space-4;
+
+  h1 {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+}
+
+// --- Card Base ---
+@mixin card-base {
+  background: $color-bg-card;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  transition: box-shadow $transition-base, transform $transition-base;
+}
+
+// --- Card Hover ---
+@mixin card-hover {
+  &:hover {
+    box-shadow: $shadow-md;
+    transform: translateY(-2px);
+  }
+}
+
+// --- Interactive Card ---
+@mixin interactive-card {
+  @include card-base;
+  cursor: pointer;
+
+  &:hover {
+    @include card-hover;
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: $shadow-sm;
+  }
+}
+
+// --- Data Table ---
+@mixin data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-base;
+
+  thead th {
+    background: $color-gray-50;
+    color: $color-text-secondary;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-sm;
+    padding: $space-3 $space-4;
+    text-align: right;
+    border-bottom: 2px solid $color-border;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: $space-3 $space-4;
+    border-bottom: 1px solid $color-border-light;
+    color: $color-text-primary;
+  }
+
+  tbody tr {
+    transition: background $transition-fast, transform $transition-fast;
+
+    &:hover {
+      background: $color-bg-hover;
+    }
+
+    &:active {
+      background: $color-bg-active;
+    }
+  }
+}
+
+// --- Form Label ---
+@mixin form-label {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  margin-bottom: $space-1;
+}
+
+// --- Form Grid ---
+@mixin form-grid {
+  display: grid;
+  gap: $space-4;
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+}
+
+// --- Input Base ---
+@mixin input-base {
+  width: 100%;
+  padding: $space-2 $space-3;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  color: $color-text-primary;
+  background: $color-bg-card;
+  border: 1.5px solid $color-border;
+  border-radius: $radius-md;
+  outline: none;
+  transition: border-color $transition-fast, box-shadow $transition-fast, transform $transition-fast;
+
+  &:focus {
+    border-color: $color-border-focus;
+    box-shadow: 0 0 0 3px rgba($color-primary-500, 0.15);
+    transform: translateY(-1px);
+  }
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+
+  &:disabled {
+    background: $color-gray-100;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+// --- Pagination ---
+@mixin pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-1;
+  padding: $space-4 0;
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 $space-2;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $color-text-secondary;
+    background: $color-bg-card;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover:not(:disabled) {
+      background: $color-bg-hover;
+      border-color: $color-gray-300;
+      transform: translateY(-1px);
+    }
+
+    &.active {
+      background: $color-primary-500;
+      color: $color-text-inverse;
+      border-color: $color-primary-500;
+      box-shadow: 0 2px 8px rgba($color-primary-500, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+}
+
+// --- State Message (loading/empty/error) ---
+@mixin state-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $space-12 $space-6;
+  text-align: center;
+  color: $color-text-muted;
+  font-size: $font-size-md;
+  gap: $space-2;
+}
+
+// --- Skeleton Loading ---
+@mixin skeleton-pulse {
+  background: linear-gradient(
+    90deg,
+    $color-gray-100 25%,
+    $color-gray-200 50%,
+    $color-gray-100 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: $radius-sm;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ============================================================
+// RTL SUPPORT
+// ============================================================
+
+@mixin rtl-border-start($value) {
+  border-left: $value;
+  [dir="rtl"] & {
+    border-left: none;
+    border-right: $value;
+  }
+}
+
+@mixin rtl-padding-start($value) {
+  padding-left: $value;
+  [dir="rtl"] & {
+    padding-left: auto;
+    padding-right: $value;
+  }
+}
+
+@mixin rtl-margin-start($value) {
+  margin-left: $value;
+  [dir="rtl"] & {
+    margin-left: auto;
+    margin-right: $value;
+  }
+}
+
+// ============================================================
+// BUTTON VARIANTS
+// ============================================================
+
+@mixin btn-primary {
+  background-color: $color-primary-500;
+  border-color: $color-primary-500;
+  color: $color-text-inverse;
+  transition: all $transition-base;
+
+  &:hover {
+    background-color: $color-primary-600;
+    border-color: $color-primary-600;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($color-primary-500, 0.3);
+  }
+
+  &:active {
+    background-color: $color-primary-700;
+    border-color: $color-primary-700;
+    transform: translateY(0);
+  }
+}
+
+@mixin btn-outline {
+  background-color: transparent;
+  border-color: $color-border;
+  color: $color-text-secondary;
+  transition: all $transition-base;
+
+  &:hover {
+    background-color: $color-bg-hover;
+    border-color: $color-gray-300;
+    color: $color-text-primary;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@mixin btn-success {
+  background-color: $color-success;
+  border-color: $color-success;
+  color: $color-text-inverse;
+  transition: all $transition-base;
+
+  &:hover {
+    background-color: $color-success-dark;
+    border-color: $color-success-dark;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($color-success, 0.3);
+  }
+}
+
+@mixin btn-danger {
+  background-color: $color-danger;
+  border-color: $color-danger;
+  color: $color-text-inverse;
+  transition: all $transition-base;
+
+  &:hover {
+    background-color: $color-danger-dark;
+    border-color: $color-danger-dark;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($color-danger, 0.3);
+  }
+}
+
+// ============================================================
+// ANIMATION KEYFRAMES
+// ============================================================
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// --- Animation Utilities ---
+@mixin animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@mixin animate-fadeInUp {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@mixin animate-slideInRight {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@mixin animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@mixin animate-spin {
+  animation: spin 1s linear infinite;
+}

@@ -1,0 +1,34 @@
+<nb-layout>
+  <nb-layout-column class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-illustration">
+        <div class="brand-badge">POS</div>
+        <h1>نقطة البيع</h1>
+        <p>إدارة المبيعات، المخزون، العملاء والطلبات من واجهة واحدة.</p>
+      </div>
+
+      <div class="auth-form-panel">
+        <div class="auth-header">
+          <span class="eyebrow">تسجيل الدخول</span>
+          <h2>مرحباً بك</h2>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <label class="form-label" for="email">البريد الإلكتروني</label>
+          <input id="email" nbInput fullWidth formControlName="email" type="email" placeholder="name@example.com" autocomplete="username" />
+
+          <label class="form-label" for="password">كلمة المرور</label>
+          <input id="password" nbInput fullWidth formControlName="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+
+          <nb-alert *ngIf="errorMessage" status="danger" outline>
+            {{ errorMessage }}
+          </nb-alert>
+
+          <button nbButton status="primary" size="large" fullWidth type="submit" [disabled]="submitting">
+            {{ submitting ? 'جاري الدخول...' : 'تسجيل الدخول' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </nb-layout-column>
+</nb-layout>

@@ -1,0 +1,186 @@
+// ============================================================
+// GLOBAL OVERRIDES - Ocean Blue Theme
+// ============================================================
+
+@import 'design-tokens';
+@import 'mixins';
+
+@mixin nb-overrides() {
+  // --- nb-select size fix ---
+  nb-select.size-medium button {
+    padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
+    nb-icon {
+      right: 0.41rem !important;
+    }
+  }
+
+  // --- Button overrides ---
+  button[nbButton] {
+    &.appearance-filled.status-primary {
+      background-color: $color-primary-500;
+      border-color: $color-primary-500;
+
+      &:hover {
+        background-color: $color-primary-600;
+        border-color: $color-primary-600;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($color-primary-500, 0.3);
+      }
+
+      &:active {
+        background-color: $color-primary-700;
+        border-color: $color-primary-700;
+        transform: translateY(0);
+      }
+    }
+
+    &.appearance-filled.status-success {
+      background-color: $color-success;
+      border-color: $color-success;
+
+      &:hover {
+        background-color: $color-success-dark;
+        border-color: $color-success-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($color-success, 0.3);
+      }
+    }
+
+    &.appearance-filled.status-warning {
+      background-color: $color-warning;
+      border-color: $color-warning;
+
+      &:hover {
+        background-color: $color-warning-dark;
+        border-color: $color-warning-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($color-warning, 0.3);
+      }
+    }
+
+    &.appearance-filled.status-danger {
+      background-color: $color-danger;
+      border-color: $color-danger;
+
+      &:hover {
+        background-color: $color-danger-dark;
+        border-color: $color-danger-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($color-danger, 0.3);
+      }
+    }
+
+    &.appearance-outline {
+      border-color: $color-border;
+      color: $color-text-secondary;
+
+      &:hover {
+        background-color: $color-bg-hover;
+        border-color: $color-gray-300;
+        color: $color-text-primary;
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  // --- nb-card body padding ---
+  nb-card {
+    nb-card-body {
+      &.p-0 {
+        padding: 0 !important;
+      }
+    }
+  }
+
+  // --- nb-input focus ring ---
+  nb-input {
+    &.appearance-filled {
+      box-shadow: none;
+    }
+
+    &.appearance-outline {
+      box-shadow: none;
+    }
+  }
+
+  // --- nb-sidebar theming ---
+  nb-sidebar {
+    background-color: $color-bg-sidebar;
+
+    .scrollable-container {
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: $radius-full;
+      }
+    }
+  }
+
+  // --- nb-menu sidebar theming ---
+  nb-menu {
+    .menu-items {
+      .menu-item {
+        a {
+          color: $color-gray-300;
+          font-family: $font-family;
+          font-weight: $font-weight-medium;
+          padding: 0.625rem 1.25rem;
+          transition: all $transition-fast;
+
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            color: $color-text-inverse;
+          }
+
+          nb-icon {
+            color: inherit;
+          }
+        }
+
+        &.active {
+          a {
+            color: $color-text-inverse;
+            background-color: rgba($color-primary-500, 0.2);
+            border-left: 3px solid $color-primary-500;
+
+            [dir="rtl"] & {
+              border-left: none;
+              border-right: 3px solid $color-primary-500;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // --- Global scrollbar ---
+  @include scrollbar-thin;
+
+  // ============================================================
+  // GLOBAL MICRO-INTERACTIONS
+  // ============================================================
+
+  // Smooth transitions for all interactive elements
+  a, button, input, select, textarea, nb-checkbox, nb-radio, nb-toggle {
+    transition: all $transition-fast;
+  }
+
+  // Button press effect
+  button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  // Card hover effect
+  nb-card {
+    &:hover {
+      box-shadow: $shadow-md;
+    }
+  }
+
+  // Input focus effect
+  input:focus, select:focus, textarea:focus {
+    transform: translateY(-1px);
+  }
+}

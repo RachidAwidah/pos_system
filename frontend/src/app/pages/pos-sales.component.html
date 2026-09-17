@@ -1,0 +1,309 @@
+<div class="pos-sales">
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">{{ 'SALES.TITLE' | translate }}</span>
+      <h1>{{ 'SALES.SUBTITLE' | translate }}</h1>
+    </div>
+    <div class="shift-actions">
+      <span *ngIf="currentShift" class="shift-status">{{ 'SALES.SHIFT_OPEN' | translate }}</span>
+      <button *ngIf="!currentShift" nbButton status="primary" (click)="openShiftForm()">{{ 'SALES.OPEN_SHIFT' | translate }}</button>
+      <button *ngIf="currentShift" nbButton status="warning" (click)="openCloseShiftForm()">{{ 'SALES.CLOSE_SHIFT' | translate }}</button>
+    </div>
+  </div>
+
+  <nb-card *ngIf="showShiftForm" class="shift-form">
+    <nb-card-header class="shift-form__header">
+      <h2>{{ 'SALES.OPEN_SHIFT_TITLE' | translate }}</h2>
+      <button nbButton ghost status="basic" size="small" (click)="showShiftForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
+    </nb-card-header>
+    <nb-card-body>
+      <div class="shift-form__hint">
+        <p>{{ 'SALES.OPEN_SHIFT_HINT' | translate }}</p>
+        <p>{{ 'SALES.OPENING_USD_HINT' | translate }}</p>
+      </div>
+      <div class="shift-field-row">
+        <label class="shift-field-full">
+          {{ 'SALES.REGISTER' | translate }}
+          <select [ngModel]="selectedRegisterId" (ngModelChange)="onRegisterChange($event)" [disabled]="registersLoading">
+            <option *ngFor="let register of registers" [value]="register.id">
+              {{ register.name }}{{ register.open_shift ? (' ' + ('SALES.OPEN_REGISTER_HAS_SHIFT' | translate)) : '' }}
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div *ngIf="shiftError" class="shift-error">{{ shiftError }}</div>
+
+      <div *ngIf="selectedRegister?.open_shift as occupiedShift; else newShiftFields" class="occupied-shift-card">
+        <div class="occupied-shift-card__icon">⚠</div>
+        <div class="occupied-shift-card__body">
+          <h3>{{ 'SALES.SHIFT_OCCUPIED_TITLE' | translate }}</h3>
+          <p class="occupied-shift-card__detail">
+            {{ ('SALES.SHIFT_OPENED_BY' | translate: { name: occupiedShift.opened_by_name || ('SALES.SHIFT_OPENED_BY_USER' | translate) }) }}
+          </p>
+          <p class="occupied-shift-card__detail">
+            {{ 'SALES.SHIFT_OPENED_AT' | translate: { time: occupiedShift.opened_at } }}
+          </p>
+          <div class="occupied-shift-card__actions">
+            <button *ngIf="occupiedShift.owned_by_current_user"
+                    nbButton status="primary" size="small" (click)="continueShift()">
+              {{ 'SALES.CONTINUE_SHIFT' | translate }}
+            </button>
+            <button *ngIf="canForceCloseShifts"
+                    nbButton status="danger" size="small"
+                    (click)="openCloseShiftForm(true)">
+              {{ 'SALES.ADMIN_FORCE_CLOSE' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #newShiftFields>
+        <div class="shift-field-row">
+          <label class="shift-field-half">
+            {{ 'SALES.OPENING_CASH' | translate }}
+            <input nbInput type="number" min="0" step="0.01" [(ngModel)]="openingCash" />
+            <small *ngIf="lastClosingCash !== null" class="rolling-drawer-hint">
+              {{ 'SALES.ROLLING_DRAWER_HINT' | translate: { amount: lastClosingCash } }}
+            </small>
+          </label>
+          <label class="shift-field-half">
+            {{ 'SALES.NOTES' | translate }}
+            <input nbInput type="text" [(ngModel)]="shiftNotes" maxlength="2000" />
+          </label>
+        </div>
+        <div class="shift-form__actions">
+          <button nbButton status="primary" [disabled]="shiftLoading || registersLoading" (click)="openShift()">
+            {{ registersLoading ? ('SALES.OPENING_REGISTER' | translate) : (shiftLoading ? ('SALES.OPENING_SHIFT' | translate) : ('SALES.CONFIRM_OPEN' | translate)) }}
+          </button>
+        </div>
+      </ng-template>
+    </nb-card-body>
+  </nb-card>
+
+  <nb-card *ngIf="showCloseShiftForm" class="shift-form">
+    <nb-card-header class="shift-form__header">
+      <h2>{{ 'SALES.CLOSE_SHIFT_TITLE' | translate }}</h2>
+      <button nbButton ghost status="basic" size="small" (click)="showCloseShiftForm = false">{{ 'COMMON.CANCEL' | translate }}</button>
+    </nb-card-header>
+    <nb-card-body>
+      <div class="shift-form__hint">
+        <p>{{ 'SALES.CLOSE_SHIFT_HINT' | translate }}</p>
+        <p>{{ 'SALES.SHIFT_USD_HINT' | translate }}</p>
+      </div>
+      <p *ngIf="summaryLoading">{{ 'SALES.SUMMARY_LOADING' | translate }}</p>
+      <div *ngIf="cashSummary" class="shift-field-row">
+        <div class="shift-field-full">
+          <p>{{ 'SALES.OPENING_CASH' | translate }}: {{ cashSummary.opening_cash | appCurrency:'USD' }}</p>
+          <strong>{{ 'SALES.EXPECTED_CASH' | translate }}: {{ cashSummary.expected_cash | appCurrency:'USD' }}</strong>
+          <p *ngIf="validClosingCash">{{ 'SALES.CASH_DIFFERENCE' | translate }}: {{ closingDifference | appCurrency:'USD' }}</p>
+        </div>
+      </div>
+      <div class="shift-field-row">
+        <label class="shift-field-full">
+          {{ 'SALES.CLOSING_CASH' | translate }}
+          <input nbInput type="number" min="0" step="0.01" [(ngModel)]="closingCash" />
+        </label>
+      </div>
+      <div class="shift-field-row" *ngIf="!administrativeClose">
+        <label class="shift-field-full">
+          {{ 'SALES.CLOSING_NOTES' | translate }} <small>{{ 'SALES.CLOSING_NOTES_HINT' | translate }}</small>
+          <textarea nbInput fullWidth [(ngModel)]="closingNotes" maxlength="2000" rows="2"
+                    [placeholder]="'SALES.CLOSING_NOTES_PLACEHOLDER' | translate"></textarea>
+        </label>
+      </div>
+      <div class="shift-field-row" *ngIf="administrativeClose || (largeClosingDifference && canForceCloseShifts)">
+        <label class="shift-field-full">
+          {{ 'SALES.ADMIN_OVERRIDE_REASON' | translate }}
+          <textarea *ngIf="administrativeClose" nbInput fullWidth [(ngModel)]="forceCloseReason" maxlength="2000" rows="2"></textarea>
+          <textarea *ngIf="!administrativeClose" nbInput fullWidth [(ngModel)]="adminOverrideReason" maxlength="2000" rows="2"></textarea>
+        </label>
+      </div>
+      <p *ngIf="largeClosingDifference && !canForceCloseShifts" class="shift-error">{{ 'SALES.ADMIN_CLOSE_NEEDED' | translate }}</p>
+      <div *ngIf="shiftError" class="shift-error">{{ shiftError }}</div>
+      <div class="shift-form__actions">
+        <button nbButton status="warning" [disabled]="shiftLoading || summaryLoading || !cashSummary || !validClosingCash || (largeClosingDifference && !canForceCloseShifts) || (administrativeClose && !forceCloseReason.trim()) || (!administrativeClose && closingDifference !== 0 && !closingNotes.trim()) || (!administrativeClose && largeClosingDifference && !adminOverrideReason.trim())" (click)="closeShift()">
+          {{ shiftLoading ? ('SALES.CLOSING' | translate) : ('SALES.CONFIRM_CLOSE' | translate) }}
+        </button>
+      </div>
+    </nb-card-body>
+  </nb-card>
+
+  <div class="sales-layout">
+    <section class="products-panel">
+      <div class="toolbar">
+        <div class="toolbar-search">
+          <input nbInput type="search" fullWidth [placeholder]="'SALES.PRODUCT_SEARCH' | translate" [(ngModel)]="productSearch" />
+        </div>
+        <div class="toolbar-categories">
+          <button *ngFor="let category of categories"
+                  nbButton
+                  [status]="selectedCategory === category ? 'primary' : 'basic'"
+                  size="small"
+                  (click)="selectedCategory = category">
+            {{ category }}
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="productsLoading" class="empty-cart">{{ 'SALES.LOADING_PRODUCTS' | translate }}</div>
+      <div *ngIf="productsError" class="shift-error">{{ productsError }}</div>
+
+      <div class="product-table-wrap">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th class="col-idx">#</th>
+              <th class="col-name">{{ 'SALES.PRODUCT_NAME' | translate }}</th>
+              <th class="col-sku">SKU</th>
+              <th class="col-price">{{ 'SALES.COL_PRICE' | translate }}</th>
+              <th class="col-stock">{{ 'SALES.COL_STOCK' | translate }}</th>
+              <th class="col-action">{{ 'SALES.COL_ACTION' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of filteredProducts; let i = index"
+                [class.out-of-stock]="Number(product.quantity_available) <= 0">
+              <td class="col-idx">{{ i + 1 }}</td>
+              <td class="col-name">
+                <span class="product-name">{{ product.name }}</span>
+                <span class="product-meta">{{ 'SALES.TAX_LABEL' | translate }}: {{ product.tax_rate }}% · {{ product.unit?.symbol || '' }}</span>
+              </td>
+              <td class="col-sku"><span class="sku-badge">{{ product.sku }}</span></td>
+              <td class="col-price">{{ product.price | appCurrency }}</td>
+              <td class="col-stock">
+                <span class="stock-badge" [class.low]="Number(product.quantity_available) <= 5">
+                  {{ product.quantity_available }}
+                </span>
+              </td>
+              <td class="col-action">
+                <button nbButton status="primary" size="small"
+                        [disabled]="Number(product.quantity_available) <= 0"
+                        (click)="addToCart(product)">
+                  {{ 'SALES.ADD' | translate }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="product-pagination" *ngIf="productLastPage > 1">
+        <span>{{ ('SALES.PAGE_PRODUCTS' | translate: { current: productPage, last: productLastPage }) }}</span>
+        <button nbButton size="small" status="basic" [disabled]="productsLoading || productPage === productLastPage" (click)="loadProducts(productPage + 1, true)">{{ 'SALES.LOAD_MORE' | translate }}</button>
+      </div>
+    </section>
+
+    <aside class="cart-panel">
+      <div class="cart-header">
+        <h2>{{ 'SALES.CART_TITLE' | translate }}</h2>
+        <span>{{ ('SALES.CART_ITEMS' | translate: { count: cart.length }) }}</span>
+      </div>
+
+      <div class="cart-items" *ngIf="cart.length; else emptyCart">
+        <div *ngFor="let item of cart" class="cart-item">
+          <div class="cart-item__main">
+            <div class="cart-item__info">
+              <strong [title]="item.name">{{ item.name }}</strong>
+              <span>{{ item.price | appCurrency }} {{ 'SALES.PER_UNIT' | translate }}</span>
+            </div>
+            <div class="cart-item__total">
+              <small>{{ 'SALES.GRAND_TOTAL' | translate }}</small>
+              <strong>{{ item.price * item.quantity | appCurrency }}</strong>
+            </div>
+          </div>
+
+          <div class="cart-item__actions">
+            <div class="qty-control">
+              <button nbButton ghost status="primary" size="small" [attr.aria-label]="'SALES.DECREASE_QTY' | translate" (click)="updateQuantity(item, -1)">−</button>
+              <span>{{ item.quantity }}</span>
+              <button nbButton ghost status="primary" size="small" [attr.aria-label]="'SALES.INCREASE_QTY' | translate" (click)="updateQuantity(item, 1)">+</button>
+            </div>
+            <button nbButton ghost status="danger" size="tiny" (click)="updateQuantity(item, -item.quantity)">{{ 'SALES.REMOVE' | translate }}</button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #emptyCart>
+        <div class="empty-cart">{{ 'SALES.CART_EMPTY' | translate }}</div>
+      </ng-template>
+
+      <div class="totals">
+        <div><span>{{ 'SALES.SUBTOTAL' | translate }}</span><strong>{{ subtotal | appCurrency }}</strong></div>
+        <div><span>{{ 'SALES.TAX_LABEL' | translate }}</span><strong>{{ tax | appCurrency }}</strong></div>
+        <div class="grand-total"><span>{{ 'SALES.GRAND_TOTAL' | translate }}</span><strong>{{ total | appCurrency }}</strong></div>
+      </div>
+
+      <label class="payment-field">
+        {{ 'SALES.CUSTOMER_LABEL' | translate }}
+        <select [(ngModel)]="customerId" [disabled]="checkoutLoading">
+          <option value="">{{ 'SALES.CASH_CUSTOMER' | translate }}</option>
+          <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.name }} — {{ 'SALES.BALANCE' | translate }} {{ customer.balance | appCurrency }}</option>
+        </select>
+      </label>
+      <label class="payment-field">
+        {{ 'SALES.PAYMENT_METHOD' | translate }}
+        <select [(ngModel)]="paymentMethodId" [disabled]="checkoutLoading">
+          <option value="">{{ 'SALES.CHOOSE_PAYMENT' | translate }}</option>
+          <option *ngFor="let method of paymentMethods" [value]="method.id">{{ method.name }}</option>
+        </select>
+      </label>
+      <label class="payment-field">
+        {{ 'SALES.PAID_AMOUNT' | translate }} <small>{{ 'SALES.PAID_HINT' | translate }}</small>
+        <input nbInput type="number" min="0" step="0.01" [max]="total" [(ngModel)]="paymentAmount" [disabled]="checkoutLoading" [placeholder]="total.toFixed(2)" />
+      </label>
+      <div *ngIf="checkoutError" class="shift-error">{{ checkoutError }}</div>
+      <button *ngIf="currentShift" nbButton status="success" fullWidth [disabled]="checkoutLoading || !cart.length" (click)="checkout()">{{ checkoutLoading ? ('SALES.PROCESSING_INVOICE' | translate) : ('SALES.COMPLETE_SALE' | translate) }}</button>
+      <div *ngIf="!currentShift && cart.length" class="shift-error" style="text-align:center; padding: 0.75rem 0;">{{ 'SALES.NO_OPEN_SHIFT' | translate }}</div>
+    </aside>
+  </div>
+
+  <div *ngIf="showStripeModal" class="stripe-overlay" (click)="closeStripeModal()">
+    <div class="stripe-modal" role="dialog" aria-modal="true" aria-labelledby="stripe-dialog-title" (click)="$event.stopPropagation()">
+      <div class="stripe-modal__header">
+        <div class="stripe-modal__title-row">
+          <span class="stripe-modal__icon">💳</span>
+          <h2 id="stripe-dialog-title">{{ 'SALES.STRIPE_TITLE' | translate }}</h2>
+        </div>
+        <button nbButton ghost status="basic" size="small" class="stripe-modal__close" (click)="closeStripeModal()">✕</button>
+      </div>
+
+      <div class="stripe-modal__body">
+        <div class="stripe-amount-box">
+          <span class="stripe-amount-label">{{ 'SALES.STRIPE_AMOUNT' | translate }}</span>
+          <span class="stripe-amount-value">{{ (paymentAmount === null ? total : paymentAmount) | appCurrency }}</span>
+        </div>
+
+        <div class="stripe-card-fields">
+          <div class="stripe-field">
+            <label class="stripe-field__label">{{ 'SALES.STRIPE_CARD' | translate }}</label>
+            <div id="stripe-card-number" class="stripe-field__input"></div>
+          </div>
+          <div class="stripe-field-row">
+            <div class="stripe-field stripe-field--half">
+              <label class="stripe-field__label">{{ 'SALES.STRIPE_EXPIRY' | translate }}</label>
+              <div id="stripe-card-expiry" class="stripe-field__input"></div>
+            </div>
+            <div class="stripe-field stripe-field--half">
+              <label class="stripe-field__label">{{ 'SALES.STRIPE_CVC' | translate }}</label>
+              <div id="stripe-card-cvc" class="stripe-field__input"></div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="stripeError" class="stripe-error">
+          <span class="stripe-error__icon">⚠</span>
+          <span>{{ stripeError }}</span>
+        </div>
+      </div>
+
+      <div class="stripe-modal__footer">
+        <button nbButton ghost status="basic" class="stripe-btn-cancel" (click)="closeStripeModal()" [disabled]="stripeLoading">{{ 'COMMON.CANCEL' | translate }}</button>
+        <button nbButton status="success" class="stripe-btn-confirm" [disabled]="stripeLoading || !cardReady" (click)="confirmStripePayment()">
+          <span *ngIf="stripeLoading" class="stripe-spinner"></span>
+          {{ stripeLoading ? ('SALES.STRIPE_PROCESSING' | translate) : ('SALES.STRIPE_CONFIRM' | translate) }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

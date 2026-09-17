@@ -1,0 +1,187 @@
+@import '../../@theme/styles/design-tokens';
+@import '../../@theme/styles/mixins';
+
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+  padding: $space-6;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-4;
+
+  h1 {
+    margin: 0.35rem 0 0;
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+  }
+}
+
+.summary {
+  margin: 0.5rem 0 0;
+  color: $color-text-muted;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $color-primary-600;
+  background: rgba($color-primary-500, 0.12);
+  padding: 0.45rem 0.8rem;
+  border-radius: $radius-full;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-3;
+
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: right;
+    padding: 0.75rem;
+    border-bottom: 1px solid $color-border;
+    white-space: nowrap;
+  }
+
+  th {
+    font-weight: $font-weight-bold;
+    color: $color-text-secondary;
+    font-size: $font-size-sm;
+  }
+}
+
+.product-name {
+  display: block;
+  font-weight: $font-weight-semibold;
+}
+
+.sku {
+  display: block;
+  font-size: 0.8rem;
+  color: $color-text-muted;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: $radius-full;
+  font-size: 0.72rem;
+  font-weight: $font-weight-bold;
+  white-space: nowrap;
+}
+
+.badge-sale { background: #dbeafe; color: #1e40af; }
+.badge-purchase { background: #d1fae5; color: #065f46; }
+.badge-customer_return { background: #fef3c7; color: #92400e; }
+.badge-supplier_return { background: #fce7f3; color: #9d174d; }
+.badge-adjustment { background: #e0e7ff; color: #3730a3; }
+.badge-damage { background: #fee2e2; color: #991b1b; }
+.badge-transfer_in { background: #ccfbf1; color: #0f766e; }
+.badge-transfer_out { background: #f3e8ff; color: #6b21a8; }
+.badge-opening { background: $color-gray-100; color: $color-text-secondary; }
+
+.qty-positive {
+  color: #059669;
+  font-weight: $font-weight-bold;
+}
+
+.qty-negative {
+  color: #dc2626;
+  font-weight: $font-weight-bold;
+}
+
+.notes-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.state {
+  padding: $space-8 $space-4;
+  text-align: center;
+  color: $color-text-muted;
+
+  &.error {
+    color: $color-danger;
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: $space-4;
+  padding-top: $space-4;
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+:host ::ng-deep {
+  select,
+  select[nbInput] {
+    appearance: auto;
+    background-color: #fff;
+    border: 1.5px solid #0077B6;
+    border-radius: $radius-sm;
+    padding: 0.45rem 2rem 0.45rem 0.75rem;
+    font-size: $font-size-sm;
+    font-family: $font-family;
+    color: #023E8A;
+    background-image: none;
+    cursor: pointer;
+    transition: border-color $transition-base, box-shadow $transition-base;
+
+    &:hover {
+      border-color: #00B4D8;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: #0077B6;
+      box-shadow: 0 0 0 3px rgba(#0077B6, 0.18);
+    }
+  }
+
+  .filters nb-input {
+    width: auto !important;
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .page-header button[nbButton] {
+    flex-shrink: 0;
+  }
+}

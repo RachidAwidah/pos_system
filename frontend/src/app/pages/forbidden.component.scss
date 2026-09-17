@@ -1,0 +1,35 @@
+@import '../@theme/styles/design-tokens';
+
+.forbidden-wrap {
+  display: flex;
+  min-height: 70vh;
+  align-items: center;
+  justify-content: center;
+  padding: $space-8;
+}
+
+nb-card {
+  width: min(520px, 100%);
+}
+
+nb-card-body {
+  text-align: center;
+  padding: 2.5rem $space-8;
+}
+
+h1 {
+  font-size: 4rem;
+  margin: 0;
+  color: $color-primary-700;
+}
+
+h2 {
+  font-size: 1.9rem;
+  margin: 0.5rem 0;
+  color: $color-text-primary;
+}
+
+p {
+  color: $color-text-secondary;
+  margin-bottom: $space-6;
+}

@@ -1,0 +1,14 @@
+nul
+.git-snapshots/
+**/node_modules
+**/vendor
+**/.env
+**/dist
+**/.angular
+**/storage/logs/*
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+**/*.log
+.DS_Store
+Thumbs.db

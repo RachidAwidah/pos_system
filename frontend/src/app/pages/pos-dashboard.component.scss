@@ -1,0 +1,416 @@
+@import '../@theme/styles/design-tokens';
+@import '../@theme/styles/mixins';
+
+// Local aliases for backward compatibility
+$primary: $color-primary-500;
+$primary-dark: $color-primary-600;
+$primary-light: $color-primary-50;
+$primary-lighter: $color-primary-50;
+$accent: $color-primary-400;
+$success: $color-success;
+$warning: $color-warning;
+$danger: $color-danger;
+
+$dark: $color-gray-900;
+$gray-dark: $color-gray-600;
+$gray: $color-gray-400;
+$gray-light: $color-gray-200;
+$gray-lighter: $color-gray-100;
+$white: $color-bg-card;
+$bg-body: $color-bg-page;
+
+$text-primary: $color-text-primary;
+$text-secondary: $color-text-secondary;
+$text-light: $color-text-muted;
+$border-color: $color-border;
+
+.pos-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: $bg-body;
+  min-height: 100vh;
+
+  nb-card {
+    margin: 0;
+  }
+}
+
+.state {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: $text-light;
+  font-size: 0.95rem;
+
+  &.error {
+    color: $danger;
+    font-weight: 600;
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.25rem 1.75rem;
+  background: $white;
+  border-radius: $radius-md;
+  border: 1px solid $border-color;
+  box-shadow: $shadow-sm;
+
+  > div:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: $text-primary;
+    letter-spacing: -0.3px;
+  }
+
+  button[nbButton] {
+    border-radius: $radius-full;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.5rem 1.25rem;
+    transition: all $transition-base;
+
+    &[status="primary"] {
+      background: $primary;
+      border-color: $primary;
+      color: $white;
+      &:hover:not(:disabled) {
+        background: $primary-dark;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($primary, 0.3);
+      }
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.eyebrow {
+  @include badge(rgba($primary, 0.12), $primary);
+  font-size: 0.7rem;
+  padding: 0.3rem 0.9rem;
+  align-self: flex-start;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  @include card-base;
+
+  &:hover {
+    @include card-hover;
+  }
+
+  nb-card-body {
+    padding: 1.25rem 1.2rem;
+  }
+
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: $text-secondary;
+
+    span:first-child {
+      font-weight: 500;
+    }
+  }
+
+  h2 {
+    margin: 0.75rem 0 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: $text-primary;
+    letter-spacing: -0.5px;
+  }
+
+  .trend {
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: $radius-full;
+
+    &.positive {
+      background: rgba($success, 0.12);
+      color: $success;
+    }
+
+    &.warning {
+      background: rgba($warning, 0.12);
+      color: darken($warning, 15%);
+    }
+  }
+}
+
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1.5rem;
+}
+
+.wide-card {
+  @include card-base;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+
+  nb-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: $text-primary;
+    border-bottom: 1px solid $border-color;
+    background: $primary-lighter;
+
+    button[nbButton] {
+      border-radius: $radius-full;
+      font-weight: 600;
+      font-size: 0.7rem;
+      padding: 0.2rem 1rem;
+      background: $white;
+      border: 1px solid $primary;
+      color: $primary;
+      transition: all $transition-base;
+
+      &:hover:not(:disabled) {
+        background: $primary;
+        color: $white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba($primary, 0.2);
+      }
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  nb-card-body {
+    flex: 1;
+    padding: 0.75rem 1.25rem 1.25rem;
+    overflow-x: auto;
+  }
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  thead th {
+    text-align: right;
+    padding: 0.6rem 0.4rem;
+    font-weight: 600;
+    color: $text-secondary;
+    border-bottom: 2px solid $border-color;
+    background: $gray-lighter;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    text-align: right;
+    padding: 0.6rem 0.4rem;
+    border-bottom: 1px solid $border-color;
+    color: $text-primary;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: $primary-lighter;
+  }
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.7rem;
+  border-radius: $radius-full;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+
+  &.success {
+    background: rgba($success, 0.12);
+    color: $success;
+  }
+
+  &.warning {
+    background: rgba($warning, 0.12);
+    color: darken($warning, 15%);
+  }
+
+  &.danger {
+    background: rgba($danger, 0.12);
+    color: $danger;
+  }
+}
+
+.product-list {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid $border-color;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  > div {
+    flex: 1;
+    min-width: 0;
+
+    strong {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: $text-primary;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    small {
+      font-size: 0.7rem;
+      color: $text-light;
+    }
+  }
+
+  > span {
+    font-weight: 700;
+    color: $primary-dark;
+    font-size: 0.95rem;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 1200px) {
+  .bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .pos-dashboard {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+
+    h1 {
+      font-size: 1.4rem;
+    }
+
+    button[nbButton] {
+      align-self: flex-start;
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .stat-card nb-card-body {
+    padding: 0.9rem;
+  }
+
+  .stat-card h2 {
+    font-size: 1.5rem;
+    margin-top: 0.4rem;
+  }
+
+  .stat-card__meta {
+    font-size: 0.75rem;
+  }
+
+  .wide-card nb-card-header {
+    font-size: 0.95rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+
+    thead th,
+    tbody td {
+      padding: 0.4rem 0.3rem;
+    }
+  }
+
+  .product-list {
+    flex-wrap: wrap;
+    gap: 0.3rem;
+
+    > span {
+      margin-right: 0;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .eyebrow {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .data-table {
+    font-size: 0.65rem;
+    thead th,
+    tbody td {
+      padding: 0.3rem 0.2rem;
+    }
+  }
+}
