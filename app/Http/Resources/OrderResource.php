@@ -23,6 +23,8 @@ class OrderResource extends JsonResource
             'notes' => $this->notes, 'order_date' => $this->order_date, 'items' => $this->whenLoaded('items'),
             'payments' => $this->whenLoaded('payments'), 'customer' => $this->whenLoaded('customer'),
             'user' => $this->whenLoaded('user'), 'warehouse' => $this->whenLoaded('warehouse'),
+            'shift' => $this->whenLoaded('shift'),
+            'returns' => SalesReturnResource::collection($this->whenLoaded('returns')),
             'items_count' => $this->whenCounted('items'),
         ];
     }

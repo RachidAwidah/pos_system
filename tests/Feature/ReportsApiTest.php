@@ -57,5 +57,7 @@ class ReportsApiTest extends TestCase
         Sanctum::actingAs($cashier);
 
         $this->getJson('/v1/reports/profit')->assertForbidden();
+        $this->getJson('/v1/reports/overview')->assertForbidden();
+        $this->getJson('/v1/reports/products')->assertForbidden();
     }
 }

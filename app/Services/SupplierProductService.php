@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\SupplierProduct;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 class SupplierProductService
 {

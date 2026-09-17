@@ -1,3 +1,32 @@
+# POS System API
+
+Laravel 13 backend for the POS system. It provides the versioned `/v1` API, inventory, purchasing, sales, returns, shifts, reporting, role-based access, Stripe payment intents, and OpenAPI documentation.
+
+## Production deployment
+
+1. Copy `.env.example` to `.env` in the deployment environment only. Never commit `.env`.
+2. Set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, a generated `APP_KEY`, database credentials, a strong `ADMIN_PASSWORD`, and the production frontend URL in `CORS_ALLOWED_ORIGINS`.
+3. Set `STRIPE_KEY` and `STRIPE_SECRET` only when card payments are enabled. The secret must remain server-side.
+4. Install optimized dependencies with `composer install --no-dev --optimize-autoloader`.
+5. Run `php artisan migrate --force`, `php artisan storage:link`, `php artisan config:cache`, `php artisan route:cache`, and `php artisan view:cache` during the release.
+6. Point the web server document root to `public/`. Run a queue worker when `QUEUE_CONNECTION` is asynchronous.
+
+The included `Dockerfile` serves the API through Apache and supports MySQL and SQLite. Pass all secrets at runtime; `.dockerignore` prevents local environment files from entering the image.
+
+## Local setup
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
+```
+
+Run verification with `php artisan test --compact` and generate API docs with `php artisan l5-swagger:generate --no-interaction`.
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'fxfeed' => [
+        'api_key' => env('FXFEED_API_KEY'),
+        'base_url' => 'https://api.fxfeed.io/v2/latest',
+        'cache_ttl' => 14400, // 4 hours
+        'supported_currencies' => ['USD', 'SYP', 'TRY'],
+    ],
+
 ];

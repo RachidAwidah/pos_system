@@ -12,13 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('saved_filters', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('target_screen');
             $table->string('filter_name');
             $table->boolean('is_public')->default(false);
         });
-
 
     }
 
@@ -27,7 +26,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        
+
         Schema::dropIfExists('saved_filters');
     }
 };

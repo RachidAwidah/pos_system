@@ -22,6 +22,10 @@ class CloseShiftRequest extends FormRequest
      */
     public function rules(): array
     {
-        return ['closing_cash' => ['required', 'numeric', 'decimal:0,2', 'min:0']];
+        return [
+            'closing_cash' => ['required', 'numeric', 'decimal:0,2', 'min:0'],
+            'closing_notes' => ['nullable', 'string', 'max:2000'],
+            'admin_override_reason' => ['nullable', 'string', 'max:2000'],
+        ];
     }
 }

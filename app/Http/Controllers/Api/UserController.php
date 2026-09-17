@@ -9,16 +9,21 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\AuditLogService;
 use App\Services\UserManagementService;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class UserController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return UserResource::collection(
-            User::query()->with('roles.permissions')->orderBy('full_name')->paginate(15),
-        );
+        $query = User::query()->with('roles.permissions')->orderBy('full_name');
+
+        if ($request->boolean('all')) {
+            return UserResource::collection($query->get());
+        }
+
+        return UserResource::collection($query->paginate(15));
     }
 
     public function store(StoreUserRequest $request, UserManagementService $users): UserResource

@@ -11,10 +11,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 #[Table(name: 'purchase_orders', key: 'id', keyType: 'string', incrementing: false)]
 #[Fillable([
     'purchase_order_number',
+    'sequence_number',
     'user_id',
     'supplier_id',
     'warehouse_id',
@@ -53,6 +55,17 @@ class PurchaseOrder extends Model
             'expected_at' => 'date',
             'cancelled_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function ($purchaseOrder) {
+            if (empty($purchaseOrder->sequence_number)) {
+                $sequence = DB::table('purchase_order_sequences')->insertGetId([]);
+                $purchaseOrder->sequence_number = $sequence;
+                $purchaseOrder->purchase_order_number = 'PO-'.str_pad($sequence, 18, '0', STR_PAD_LEFT);
+            }
+        });
     }
 
     public function user(): BelongsTo

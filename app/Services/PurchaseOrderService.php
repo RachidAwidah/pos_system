@@ -3,16 +3,15 @@
 namespace App\Services;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
-use DomainException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 class PurchaseOrderService
 {
@@ -36,52 +35,14 @@ class PurchaseOrderService
         }
 
         return DB::transaction(function () use ($user, $supplier, $warehouse, $items, $expectedAt, $notes): PurchaseOrder {
-            $normalizedItems = $this->normalizeItems($items);
-            $subtotalAmount = '0.00';
-            $discountAmount = '0.00';
-            $taxAmount = '0.00';
-            $itemValues = [];
-
-            foreach ($normalizedItems as $item) {
-                $product = $item['product'];
-                $lineSubtotal = $this->roundMoney(bcmul($item['quantity'], $item['unit_cost'], 6));
-                if (bccomp($item['discount_amount'], $lineSubtotal, 2) === 1) {
-                    throw new InvalidArgumentException('An item discount cannot exceed its subtotal.');
-                }
-
-                $taxableAmount = bcsub($lineSubtotal, $item['discount_amount'], 2);
-                $taxRate = $this->normalizeDecimal((string) ($product->tax?->tax_percentage ?? 0), 4);
-                $lineTax = $this->roundMoney(bcdiv(bcmul($taxableAmount, $taxRate, 6), '100', 6));
-                $lineTotal = bcadd($taxableAmount, $lineTax, 2);
-
-                $subtotalAmount = bcadd($subtotalAmount, $lineSubtotal, 2);
-                $discountAmount = bcadd($discountAmount, $item['discount_amount'], 2);
-                $taxAmount = bcadd($taxAmount, $lineTax, 2);
-                $itemValues[] = [
-                    'product_id' => $product->id,
-                    'product_name' => $product->product_name,
-                    'sku' => $product->sku,
-                    'ordered_quantity' => $item['quantity'],
-                    'received_quantity' => '0.000',
-                    'unit_cost' => $item['unit_cost'],
-                    'tax_rate' => $taxRate,
-                    'subtotal_amount' => $lineSubtotal,
-                    'discount_amount' => $item['discount_amount'],
-                    'tax_amount' => $lineTax,
-                    'total_amount' => $lineTotal,
-                ];
-            }
+            [$totals, $itemValues] = $this->prepareItems($items);
 
             $purchaseOrder = PurchaseOrder::query()->create([
-                'purchase_order_number' => $this->nextNumber(),
                 'user_id' => $user->id,
                 'supplier_id' => $supplier->id,
                 'warehouse_id' => $warehouse->id,
                 'status' => PurchaseOrderStatus::Draft,
-                'subtotal_amount' => $subtotalAmount,
-                'discount_amount' => $discountAmount,
-                'tax_amount' => $taxAmount,
-                'total_amount' => bcadd(bcsub($subtotalAmount, $discountAmount, 2), $taxAmount, 2),
+                ...$totals,
                 'expected_at' => $expectedAt,
                 'notes' => $notes,
             ]);
@@ -93,6 +54,75 @@ class PurchaseOrderService
             }
 
             return $purchaseOrder->load('items');
+        }, attempts: 5);
+    }
+
+    /**
+     * @param  array<int, array{product_id: string, quantity: string, unit_cost: string, discount_amount?: string}>  $items
+     */
+    public function updateDraft(
+        PurchaseOrder $purchaseOrder,
+        Supplier $supplier,
+        Warehouse $warehouse,
+        array $items,
+        ?string $expectedAt = null,
+        ?string $notes = null,
+    ): PurchaseOrder {
+        if (! $warehouse->is_active) {
+            throw new DomainException('A purchase order cannot target an inactive warehouse.');
+        }
+
+        if ($items === []) {
+            throw new InvalidArgumentException('A purchase order must contain at least one item.');
+        }
+
+        return DB::transaction(function () use ($purchaseOrder, $supplier, $warehouse, $items, $expectedAt, $notes): PurchaseOrder {
+            $lockedPurchaseOrder = PurchaseOrder::query()->lockForUpdate()->findOrFail($purchaseOrder->id);
+            if ($lockedPurchaseOrder->status !== PurchaseOrderStatus::Draft) {
+                throw new DomainException('Only draft purchase orders can be updated.');
+            }
+
+            [$totals, $itemValues] = $this->prepareItems($items);
+            $oldValues = $this->purchaseOrderValues($lockedPurchaseOrder);
+            $lockedPurchaseOrder->update([
+                'supplier_id' => $supplier->id,
+                'warehouse_id' => $warehouse->id,
+                ...$totals,
+                'expected_at' => $expectedAt,
+                'notes' => $notes,
+            ]);
+            $lockedPurchaseOrder->refresh();
+            AuditLogService::updated(PurchaseOrder::class, $lockedPurchaseOrder->id, $oldValues, $this->purchaseOrderValues($lockedPurchaseOrder));
+
+            foreach ($lockedPurchaseOrder->items()->lockForUpdate()->get() as $existingItem) {
+                AuditLogService::deleted(PurchaseOrderItem::class, $existingItem->id, $this->itemValues($existingItem));
+                $existingItem->delete();
+            }
+
+            foreach ($itemValues as $values) {
+                $purchaseOrderItem = $lockedPurchaseOrder->items()->create($values);
+                AuditLogService::created(PurchaseOrderItem::class, $purchaseOrderItem->id, $this->itemValues($purchaseOrderItem));
+            }
+
+            return $lockedPurchaseOrder->load('items');
+        }, attempts: 5);
+    }
+
+    public function deleteDraft(PurchaseOrder $purchaseOrder): void
+    {
+        DB::transaction(function () use ($purchaseOrder): void {
+            $lockedPurchaseOrder = PurchaseOrder::query()->lockForUpdate()->findOrFail($purchaseOrder->id);
+            if ($lockedPurchaseOrder->status !== PurchaseOrderStatus::Draft) {
+                throw new DomainException('Only draft purchase orders can be deleted.');
+            }
+
+            foreach ($lockedPurchaseOrder->items()->lockForUpdate()->get() as $item) {
+                AuditLogService::deleted(PurchaseOrderItem::class, $item->id, $this->itemValues($item));
+                $item->delete();
+            }
+
+            AuditLogService::deleted(PurchaseOrder::class, $lockedPurchaseOrder->id, $this->purchaseOrderValues($lockedPurchaseOrder));
+            $lockedPurchaseOrder->delete();
         }, attempts: 5);
     }
 
@@ -187,6 +217,54 @@ class PurchaseOrderService
         return $normalizedItems;
     }
 
+    /**
+     * @param  array<int, array{product_id: string, quantity: string, unit_cost: string, discount_amount?: string}>  $items
+     * @return array{array{subtotal_amount: string, discount_amount: string, tax_amount: string, total_amount: string}, array<int, array<string, string>>}
+     */
+    private function prepareItems(array $items): array
+    {
+        $subtotalAmount = '0.00';
+        $discountAmount = '0.00';
+        $taxAmount = '0.00';
+        $itemValues = [];
+
+        foreach ($this->normalizeItems($items) as $item) {
+            $product = $item['product'];
+            $lineSubtotal = $this->roundMoney(bcmul($item['quantity'], $item['unit_cost'], 6));
+            if (bccomp($item['discount_amount'], $lineSubtotal, 2) === 1) {
+                throw new InvalidArgumentException('An item discount cannot exceed its subtotal.');
+            }
+
+            $taxableAmount = bcsub($lineSubtotal, $item['discount_amount'], 2);
+            $taxRate = $this->normalizeDecimal((string) ($product->tax?->tax_percentage ?? 0), 4);
+            $lineTax = $this->roundMoney(bcdiv(bcmul($taxableAmount, $taxRate, 6), '100', 6));
+            $lineTotal = bcadd($taxableAmount, $lineTax, 2);
+            $subtotalAmount = bcadd($subtotalAmount, $lineSubtotal, 2);
+            $discountAmount = bcadd($discountAmount, $item['discount_amount'], 2);
+            $taxAmount = bcadd($taxAmount, $lineTax, 2);
+            $itemValues[] = [
+                'product_id' => $product->id,
+                'product_name' => $product->product_name,
+                'sku' => $product->sku,
+                'ordered_quantity' => $item['quantity'],
+                'received_quantity' => '0.000',
+                'unit_cost' => $item['unit_cost'],
+                'tax_rate' => $taxRate,
+                'subtotal_amount' => $lineSubtotal,
+                'discount_amount' => $item['discount_amount'],
+                'tax_amount' => $lineTax,
+                'total_amount' => $lineTotal,
+            ];
+        }
+
+        return [[
+            'subtotal_amount' => $subtotalAmount,
+            'discount_amount' => $discountAmount,
+            'tax_amount' => $taxAmount,
+            'total_amount' => bcadd(bcsub($subtotalAmount, $discountAmount, 2), $taxAmount, 2),
+        ], $itemValues];
+    }
+
     private function normalizePositiveDecimal(string $value, int $scale): string
     {
         $normalizedValue = $this->normalizeDecimal($value, $scale);
@@ -210,11 +288,6 @@ class PurchaseOrderService
     private function roundMoney(string $value): string
     {
         return bcadd(bcadd($value, '0.005', 3), '0', 2);
-    }
-
-    private function nextNumber(): string
-    {
-        return 'PO-'.now()->format('Ymd').'-'.Str::upper(Str::random(10));
     }
 
     /** @return array<string, mixed> */

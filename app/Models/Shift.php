@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'expected_cash',
     'difference_amount',
     'notes',
+    'closing_notes',
 ])]
 class Shift extends Model
 {

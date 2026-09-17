@@ -5,8 +5,6 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\Product;
-use App\Models\Register;
-use App\Models\User;
 use App\Services\CashSessionService;
 use App\Services\CheckoutService;
 use App\Services\CustomerAccountService;
@@ -20,8 +18,8 @@ class AccountServiceTest extends TestCase
 
     public function test_customer_debt_payment_updates_order_balance_and_append_only_ledger(): void
     {
-        $user = User::query()->firstOrFail();
-        $register = Register::query()->where('code', 'MAIN-REG-01')->firstOrFail();
+        $user = $this->createTestUser();
+        $register = $this->createTestRegister();
         $shift = app(CashSessionService::class)->open($register, $user, '0');
         $product = Product::query()->where('sku', 'SKU-001')->firstOrFail();
         $customer = Customer::factory()->create(['credit_limit' => '10.00', 'balance' => '0.00']);
@@ -49,8 +47,8 @@ class AccountServiceTest extends TestCase
 
     public function test_customer_payment_cannot_exceed_order_due(): void
     {
-        $user = User::query()->firstOrFail();
-        $register = Register::query()->where('code', 'MAIN-REG-01')->firstOrFail();
+        $user = $this->createTestUser();
+        $register = $this->createTestRegister();
         $shift = app(CashSessionService::class)->open($register, $user, '0');
         $product = Product::query()->where('sku', 'SKU-001')->firstOrFail();
         $customer = Customer::factory()->create(['credit_limit' => '10.00', 'balance' => '0.00']);

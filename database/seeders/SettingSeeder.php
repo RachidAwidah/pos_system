@@ -28,6 +28,11 @@ class SettingSeeder extends Seeder
             ['general', 'date_format', 'Y-m-d', 'string', true],
             ['general', 'language', 'ar', 'string', true],
             ['general', 'rtl_enabled', 'true', 'boolean', true],
+            ['payment', 'stripe_enabled', 'false', 'boolean', false],
+            ['payment', 'stripe_publishable_key', '', 'string', false],
+            ['payment', 'currency_syp_enabled', 'true', 'boolean', false],
+            ['payment', 'currency_try_enabled', 'true', 'boolean', false],
+            ['payment', 'default_display_currency', 'USD', 'string', false],
         ];
 
         foreach ($settings as [$group, $key, $value, $type, $isPublic]) {

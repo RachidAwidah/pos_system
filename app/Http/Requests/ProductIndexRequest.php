@@ -31,6 +31,7 @@ class ProductIndexRequest extends FormRequest
             'type' => ['nullable', Rule::enum(ProductType::class)],
             'low_stock' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', 'min:10', 'max:100'],
+            'all' => ['nullable', 'boolean'],
         ];
     }
 }

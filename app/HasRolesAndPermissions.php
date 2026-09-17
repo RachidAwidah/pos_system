@@ -4,35 +4,47 @@ namespace App;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 
+/** @mixin User */
 trait HasRolesAndPermissions
 {
+    /**
+     * @return BelongsToMany<Role, $this>
+     */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'user_role');
     }
 
+    /**
+     * @return Collection<int, Permission>
+     */
     public function permissions(): Collection
     {
-        return $this->roles()
-            ->with('permissions')
-            ->get()
-            ->flatMap->permissions
+        return $this->assignedRoles()
+            ->flatMap(function (Role $role): Collection {
+                /** @var Collection<int, Permission> $permissions */
+                $permissions = $role->getRelation('permissions');
+
+                return $permissions;
+            })
             ->unique('id')
             ->values();
     }
 
     public function hasRole(Role|string $role): bool
     {
+        $assignedRoles = $this->assignedRoles();
+
         if ($role instanceof Role) {
-            return $this->roles()->whereKey($role->getKey())->exists();
+            return $assignedRoles->contains(fn (Role $assignedRole): bool => $assignedRole->is($role));
         }
 
-        return $this->roles()
-            ->where(fn ($query) => $query->where('roles.id', $role)->orWhere('role_name', $role))
-            ->exists();
+        return $assignedRoles->contains(fn (Role $assignedRole): bool => $assignedRole->getKey() === $role
+            || $assignedRole->getAttribute('role_name') === $role);
     }
 
     public function hasPermission(Permission|string $permission): bool
@@ -42,17 +54,11 @@ trait HasRolesAndPermissions
         }
 
         if ($permission instanceof Permission) {
-            return $this->roles()
-                ->whereHas('permissions', fn ($query) => $query->whereKey($permission->getKey()))
-                ->exists();
+            return $this->permissions()->contains(fn (Permission $assignedPermission): bool => $assignedPermission->is($permission));
         }
 
-        return $this->roles()
-            ->whereHas('permissions', fn ($query) => $query
-                ->where(fn ($permissionQuery) => $permissionQuery
-                    ->where('permissions.id', $permission)
-                    ->orWhere('permission_key', $permission)))
-            ->exists();
+        return $this->permissions()->contains(fn (Permission $assignedPermission): bool => $assignedPermission->getKey() === $permission
+            || $assignedPermission->getAttribute('permission_key') === $permission);
     }
 
     public function assignRole(Role|string $role): void
@@ -74,5 +80,18 @@ trait HasRolesAndPermissions
             : Permission::query()->where('id', $permission)->orWhere('permission_key', $permission)->firstOrFail();
 
         $roleModel->permissions()->syncWithoutDetaching([$permissionModel->getKey()]);
+    }
+
+    /**
+     * @return Collection<int, Role>
+     */
+    private function assignedRoles(): Collection
+    {
+        $this->loadMissing('roles.permissions');
+
+        /** @var Collection<int, Role> $roles */
+        $roles = $this->getRelation('roles');
+
+        return $roles;
     }
 }

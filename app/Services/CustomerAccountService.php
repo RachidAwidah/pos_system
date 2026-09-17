@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\AccountEntryType;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\PaymentStatus;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\Customer;
 use App\Models\CustomerLedgerEntry;
 use App\Models\CustomerPayment;
@@ -12,12 +14,32 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\SalesReturn;
 use App\Models\User;
-use DomainException;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 class CustomerAccountService
 {
+    /** @return array{entries: LengthAwarePaginator, summary: array<string, string>} */
+    public function statement(Customer $customer, int $perPage = 25): array
+    {
+        return DB::transaction(function () use ($customer, $perPage): array {
+            $totals = $customer->orders()->selectRaw(
+                'COALESCE(SUM(final_amount), 0) AS invoices_total, COALESCE(SUM(paid_amount), 0) AS paid_total, COALESCE(SUM(due_amount), 0) AS due_total'
+            )->first();
+
+            return [
+                'entries' => $customer->ledgerEntries()->with('order:id,invoice_number')
+                    ->orderBy('occurred_at')->orderBy('id')->paginate($perPage),
+                'summary' => [
+                    'invoices_total' => bcadd((string) $totals->invoices_total, '0', 2),
+                    'paid_total' => bcadd((string) $totals->paid_total, '0', 2),
+                    'due_total' => bcadd((string) $totals->due_total, '0', 2),
+                    'balance' => (string) $customer->fresh()->balance,
+                ],
+            ];
+        });
+    }
+
     public function recordSale(Customer $customer, Order $order, ?User $user = null): ?CustomerLedgerEntry
     {
         $amount = (string) $order->due_amount;
@@ -94,13 +116,12 @@ class CustomerAccountService
 
             $oldOrderValues = $this->orderPaymentValues($lockedOrder);
             $paidAmount = bcadd((string) $lockedOrder->paid_amount, $normalizedAmount, 2);
-            $dueAmount = bcsub((string) $lockedOrder->final_amount, $paidAmount, 2);
+            $netOrderAmount = bcsub((string) $lockedOrder->final_amount, (string) $lockedOrder->refunded_amount, 2);
+            $dueAmount = bcsub($netOrderAmount, $paidAmount, 2);
             $lockedOrder->update([
                 'paid_amount' => $paidAmount,
                 'due_amount' => $dueAmount,
-                'payment_status' => bccomp($dueAmount, '0.00', 2) === 0
-                    ? OrderPaymentStatus::Paid
-                    : OrderPaymentStatus::Partial,
+                'payment_status' => $this->paymentStatus($lockedOrder, $dueAmount),
             ]);
             $lockedOrder->refresh();
             AuditLogService::updated(Order::class, $lockedOrder->id, $oldOrderValues, $this->orderPaymentValues($lockedOrder));
@@ -211,6 +232,20 @@ class CustomerAccountService
         }
 
         return $normalizedAmount;
+    }
+
+    private function paymentStatus(Order $order, string $dueAmount): OrderPaymentStatus
+    {
+        if (bccomp((string) $order->refunded_amount, (string) $order->final_amount, 2) === 0) {
+            return OrderPaymentStatus::Refunded;
+        }
+        if (bccomp((string) $order->refunded_amount, '0.00', 2) === 1) {
+            return OrderPaymentStatus::PartiallyRefunded;
+        }
+
+        return bccomp($dueAmount, '0.00', 2) === 0
+            ? OrderPaymentStatus::Paid
+            : OrderPaymentStatus::Partial;
     }
 
     private function normalizeNonNegativeAmount(string $amount): string

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Laravel\Sanctum\Sanctum;
@@ -44,5 +45,17 @@ class ProductSearchApiTest extends TestCase
                 (float) $product['inventory']['quantity_on_hand'],
             );
         }
+    }
+
+    public function test_cashier_product_search_does_not_expose_costs(): void
+    {
+        $cashier = User::factory()->create(['must_change_password' => false]);
+        $cashier->roles()->sync([Role::query()->where('role_name', 'Cashier')->firstOrFail()->id]);
+        Sanctum::actingAs($cashier);
+
+        $response = $this->getJson('/v1/products?per_page=10')->assertOk();
+
+        $response->assertJsonMissingPath('data.0.cost_price');
+        $response->assertJsonMissingPath('data.0.inventory.average_cost');
     }
 }

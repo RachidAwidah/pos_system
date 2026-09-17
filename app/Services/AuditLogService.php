@@ -29,8 +29,8 @@ class AuditLogService
     }
 
     /**
-     * @param array<string, mixed> $oldValues
-     * @param array<string, mixed> $newValues
+     * @param  array<string, mixed>  $oldValues
+     * @param  array<string, mixed>  $newValues
      */
     public static function updated(
         string $entityType,
@@ -69,8 +69,8 @@ class AuditLogService
     }
 
     /**
-     * @param array<string, mixed> $old
-     * @param array<string, mixed> $new
+     * @param  array<string, mixed>  $old
+     * @param  array<string, mixed>  $new
      */
     private static function persist(
         string $action,
@@ -94,15 +94,23 @@ class AuditLogService
     }
 
     /**
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      * @return array<string, mixed>
      */
-    private static function sanitize(array $values): array
+    public static function sanitize(array $values): array
     {
         $sanitized = [];
 
+        // Settings and imported records can represent a secret as {key: ..., value: ...}.
+        $sensitiveValue = false;
+        foreach (['key', 'name', 'setting_key'] as $nameField) {
+            if (isset($values[$nameField]) && is_string($values[$nameField]) && self::isSensitiveKey($values[$nameField])) {
+                $sensitiveValue = true;
+            }
+        }
+
         foreach ($values as $key => $value) {
-            if (self::isSensitiveKey((string) $key)) {
+            if (self::isSensitiveKey((string) $key) || ($sensitiveValue && in_array($key, ['value', 'old_value', 'new_value'], true))) {
                 $sanitized[$key] = '[REDACTED]';
 
                 continue;
@@ -116,10 +124,10 @@ class AuditLogService
 
     private static function isSensitiveKey(string $key): bool
     {
-        $normalizedKey = strtolower(str_replace('-', '_', $key));
+        $normalizedKey = strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '', $key));
 
         foreach (self::SENSITIVE_KEY_PARTS as $sensitiveKeyPart) {
-            if (str_contains($normalizedKey, $sensitiveKeyPart)) {
+            if (str_contains($normalizedKey, str_replace('_', '', $sensitiveKeyPart))) {
                 return true;
             }
         }
@@ -128,8 +136,8 @@ class AuditLogService
     }
 
     /**
-     * @param array<string, mixed> $oldValues
-     * @param array<string, mixed> $newValues
+     * @param  array<string, mixed>  $oldValues
+     * @param  array<string, mixed>  $newValues
      * @return array{array<string, mixed>, array<string, mixed>}
      */
     private static function changedValues(array $oldValues, array $newValues): array

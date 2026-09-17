@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\ProductType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateProductRequest extends FormRequest
 {
@@ -34,7 +35,32 @@ class UpdateProductRequest extends FormRequest
             'cost_price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'price' => ['sometimes', 'required', 'numeric', 'min:0'],
             'description' => ['sometimes', 'nullable', 'string'],
-            'image' => ['sometimes', 'nullable', 'string', 'max:2048'],
+            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'warehouse_id' => [
+                'required_if:type,stock',
+                'nullable',
+                'uuid',
+                Rule::exists('warehouses', 'id')->where('is_active', true),
+            ],
+            'reorder_level' => ['required_if:type,stock', 'nullable', 'numeric', 'decimal:0,3', 'min:0'],
+        ];
+    }
+
+    /** @return array<int, callable(Validator): void> */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($this->user()?->hasPermission('products.edit_price')) {
+                    return;
+                }
+
+                foreach (['cost_price', 'price'] as $priceField) {
+                    if ($this->has($priceField)) {
+                        $validator->errors()->add($priceField, 'لا تملك صلاحية تعديل أسعار المنتجات.');
+                    }
+                }
+            },
         ];
     }
 }

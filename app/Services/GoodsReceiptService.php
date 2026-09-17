@@ -4,15 +4,15 @@ namespace App\Services;
 
 use App\Enums\GoodsReceiptStatus;
 use App\Enums\PurchaseOrderStatus;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptItem;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\User;
-use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 class GoodsReceiptService
 {
@@ -183,18 +183,27 @@ class GoodsReceiptService
                 throw new DomainException('A receipt quantity cannot exceed the outstanding ordered quantity.');
             }
 
-            $subtotalAmount = $this->roundMoney(bcmul($quantity, (string) $purchaseOrderItem->unit_cost, 6));
-            $discountAmount = $this->roundMoney(bcdiv(
-                bcmul((string) $purchaseOrderItem->discount_amount, $quantity, 6),
-                (string) $purchaseOrderItem->ordered_quantity,
-                6,
-            ));
-            $taxableAmount = bcsub($subtotalAmount, $discountAmount, 2);
-            $taxAmount = $this->roundMoney(bcdiv(
-                bcmul($taxableAmount, (string) $purchaseOrderItem->tax_rate, 6),
-                '100',
-                6,
-            ));
+            if (bccomp($quantity, $remainingQuantity, 3) === 0) {
+                $receiptAmounts = $this->remainingReceiptAmounts($purchaseOrderItem);
+                $subtotalAmount = $receiptAmounts['subtotal_amount'];
+                $discountAmount = $receiptAmounts['discount_amount'];
+                $taxAmount = $receiptAmounts['tax_amount'];
+                $totalAmount = $receiptAmounts['total_amount'];
+            } else {
+                $subtotalAmount = $this->roundMoney(bcmul($quantity, (string) $purchaseOrderItem->unit_cost, 6));
+                $discountAmount = $this->roundMoney(bcdiv(
+                    bcmul((string) $purchaseOrderItem->discount_amount, $quantity, 6),
+                    (string) $purchaseOrderItem->ordered_quantity,
+                    6,
+                ));
+                $taxableAmount = bcsub($subtotalAmount, $discountAmount, 2);
+                $taxAmount = $this->roundMoney(bcdiv(
+                    bcmul($taxableAmount, (string) $purchaseOrderItem->tax_rate, 6),
+                    '100',
+                    6,
+                ));
+                $totalAmount = bcadd($taxableAmount, $taxAmount, 2);
+            }
 
             $normalizedItems[] = [
                 'purchase_order_item' => $purchaseOrderItem,
@@ -202,13 +211,32 @@ class GoodsReceiptService
                 'subtotal_amount' => $subtotalAmount,
                 'discount_amount' => $discountAmount,
                 'tax_amount' => $taxAmount,
-                'total_amount' => bcadd($taxableAmount, $taxAmount, 2),
+                'total_amount' => $totalAmount,
                 'batch_number' => $this->nullableTrimmedString($item['batch_number'] ?? null),
                 'expires_at' => $this->nullableTrimmedString($item['expires_at'] ?? null),
             ];
         }
 
         return $normalizedItems;
+    }
+
+    /** @return array{subtotal_amount: string, discount_amount: string, tax_amount: string, total_amount: string} */
+    private function remainingReceiptAmounts(PurchaseOrderItem $purchaseOrderItem): array
+    {
+        $received = GoodsReceiptItem::query()
+            ->whereBelongsTo($purchaseOrderItem)
+            ->selectRaw('COALESCE(SUM(subtotal_amount), 0) AS subtotal_amount')
+            ->selectRaw('COALESCE(SUM(discount_amount), 0) AS discount_amount')
+            ->selectRaw('COALESCE(SUM(tax_amount), 0) AS tax_amount')
+            ->selectRaw('COALESCE(SUM(total_amount), 0) AS total_amount')
+            ->firstOrFail();
+
+        return [
+            'subtotal_amount' => bcsub((string) $purchaseOrderItem->subtotal_amount, (string) $received->subtotal_amount, 2),
+            'discount_amount' => bcsub((string) $purchaseOrderItem->discount_amount, (string) $received->discount_amount, 2),
+            'tax_amount' => bcsub((string) $purchaseOrderItem->tax_amount, (string) $received->tax_amount, 2),
+            'total_amount' => bcsub((string) $purchaseOrderItem->total_amount, (string) $received->total_amount, 2),
+        ];
     }
 
     private function normalizePositiveQuantity(string $quantity): string

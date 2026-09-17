@@ -19,6 +19,7 @@ class ShiftResource extends JsonResource
             'closed_by_user_id' => $this->closed_by_user_id, 'status' => $this->status, 'opened_at' => $this->opened_at,
             'closed_at' => $this->closed_at, 'opening_cash' => $this->opening_cash, 'closing_cash' => $this->closing_cash,
             'expected_cash' => $this->expected_cash, 'difference_amount' => $this->difference_amount, 'notes' => $this->notes,
+            'closing_notes' => $this->closing_notes,
         ];
     }
 }

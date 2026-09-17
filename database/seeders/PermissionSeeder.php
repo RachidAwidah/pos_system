@@ -10,6 +10,7 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            'audit_logs.view',
             'users.view', 'users.create', 'users.edit', 'users.delete',
             'roles.view', 'roles.create', 'roles.edit', 'roles.delete',
             'products.view', 'products.create', 'products.edit', 'products.delete', 'products.edit_price',

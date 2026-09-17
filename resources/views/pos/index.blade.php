@@ -45,7 +45,7 @@
                 <select data-pos-category class="rounded-xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-700 outline-none focus:border-brand-500">
                     <option value="">كل الفئات</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                        <option value="{{ $category->id }}">{{ str_repeat('— ', $category->depth) }}{{ $category->category_name }}</option>
                     @endforeach
                 </select>
             </div>

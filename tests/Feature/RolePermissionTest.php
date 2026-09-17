@@ -14,6 +14,20 @@ class RolePermissionTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_seeded_roles_have_the_expected_permission_boundaries(): void
+    {
+        $admin = Role::query()->where('role_name', 'Admin')->firstOrFail();
+        $manager = Role::query()->where('role_name', 'Manager')->firstOrFail();
+        $cashier = Role::query()->where('role_name', 'Cashier')->firstOrFail();
+
+        $this->assertSame(Permission::query()->count(), $admin->permissions()->count());
+        $this->assertFalse($manager->permissions()->where('permission_key', 'settings.edit')->exists());
+        $this->assertTrue($manager->permissions()->where('permission_key', 'reports.view_financial')->exists());
+        $this->assertTrue($cashier->permissions()->where('permission_key', 'sales.create')->exists());
+        $this->assertTrue($cashier->permissions()->where('permission_key', 'products.view')->exists());
+        $this->assertFalse($cashier->permissions()->where('permission_key', 'reports.view_financial')->exists());
+    }
+
     public function test_admin_can_manage_a_custom_role_and_permissions(): void
     {
         $admin = User::query()->where('email', config('pos.admin_email'))->firstOrFail();

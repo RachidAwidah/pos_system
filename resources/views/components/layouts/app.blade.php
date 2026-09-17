@@ -29,8 +29,9 @@
                 ['route' => 'dashboard', 'match' => 'dashboard', 'label' => 'لوحة التحكم', 'icon' => '⌂', 'permission' => null],
                 ['route' => 'pos.index', 'match' => 'pos.*', 'label' => 'شاشة البيع', 'icon' => '▣', 'permission' => 'sales.create'],
                 ['route' => 'products.index', 'match' => 'products.*', 'label' => 'المنتجات', 'icon' => '◇', 'permission' => 'products.view'],
+                ['route' => 'categories.index', 'match' => 'categories.*', 'label' => 'شجرة التصنيفات', 'icon' => '⌘', 'permission' => 'categories.view'],
                 ['route' => 'orders.index', 'match' => 'orders.*', 'label' => 'الفواتير', 'icon' => '▤', 'permission' => 'sales.view'],
-                ['route' => 'reports.index', 'match' => 'reports.*', 'label' => 'التقارير والتحليلات', 'icon' => '▥', 'permission' => 'reports.view_sales'],
+                ['route' => 'reports.index', 'match' => 'reports.*', 'label' => 'التقارير والتحليلات', 'icon' => '▥', 'permission' => 'reports.view_financial'],
                 ['route' => 'customers.index', 'match' => 'customers.*', 'label' => 'العملاء', 'icon' => '◎', 'permission' => 'customers.view'],
                 ['route' => 'suppliers.index', 'match' => 'suppliers.*', 'label' => 'الموردون', 'icon' => '◉', 'permission' => 'suppliers.view'],
                 ['route' => 'users.index', 'match' => 'users.*', 'label' => 'المستخدمون', 'icon' => '♙', 'permission' => 'users.view'],
@@ -77,7 +78,9 @@
             </div>
             <div class="flex items-center gap-2">
                 <span class="hidden rounded-xl bg-slate-100 px-3 py-2 text-sm font-bold text-slate-600 sm:block">{{ now()->translatedFormat('d M Y') }}</span>
-                <a href="{{ route('pos.index') }}" class="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-600">عملية بيع جديدة</a>
+                @if (auth()->user()->hasPermission('sales.create'))
+                    <a href="{{ route('pos.index') }}" class="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-500/20 hover:bg-brand-600">عملية بيع جديدة</a>
+                @endif
             </div>
         </header>
 

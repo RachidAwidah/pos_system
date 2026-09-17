@@ -2,20 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 #[Table(name: 'settings', key: 'id', keyType: 'string', incrementing: false)]
 #[Fillable([
-        'group',
-        'key',
-        'value',
-        'type',
-        'is_public',
-    ])]
+    'group',
+    'key',
+    'value',
+    'type',
+    'is_public',
+])]
 class Setting extends Model
 {
     use HasFactory, HasUuids;

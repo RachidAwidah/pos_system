@@ -7,6 +7,8 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
 use App\Enums\ShiftStatus;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -16,10 +18,8 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\User;
-use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 class CheckoutService
 {
@@ -43,6 +43,9 @@ class CheckoutService
         string $discountValue = '0',
         int $loyaltyPoints = 0,
         ?string $notes = null,
+        string $displayCurrency = 'USD',
+        ?float $exchangeRate = null,
+        ?string $rateProvider = null,
     ): Order {
         if ($items === []) {
             throw new InvalidArgumentException('A sale must contain at least one item.');
@@ -51,7 +54,7 @@ class CheckoutService
             throw new InvalidArgumentException('Loyalty points cannot be negative.');
         }
 
-        return DB::transaction(function () use ($user, $shift, $items, $payments, $customer, $discountType, $discountValue, $loyaltyPoints, $notes): Order {
+        return DB::transaction(function () use ($user, $shift, $items, $payments, $customer, $discountType, $discountValue, $loyaltyPoints, $notes, $displayCurrency, $exchangeRate, $rateProvider): Order {
             $lockedShift = Shift::query()
                 ->with('register.warehouse')
                 ->lockForUpdate()
@@ -119,18 +122,35 @@ class CheckoutService
                 'notes' => $notes,
                 'order_date' => now(),
                 'completed_at' => now(),
+                'display_currency' => $displayCurrency,
+                'exchange_rate_used' => $exchangeRate,
+                'rate_provider' => $rateProvider,
             ]);
             AuditLogService::created(Order::class, $order->id, $this->orderValues($order));
 
             foreach ($normalizedItems as $item) {
                 $product = $item['product'];
+                $costPriceAtSale = (string) $product->cost_price;
+
+                if ($product->type->tracksInventory()) {
+                    $stockMovement = $this->inventoryService->sell(
+                        $product,
+                        $lockedShift->register->warehouse,
+                        $item['quantity'],
+                        $user,
+                        $order,
+                        'Sale '.$order->invoice_number,
+                    );
+                    $costPriceAtSale = (string) ($stockMovement->unit_cost ?? $product->cost_price);
+                }
+
                 $orderItem = $order->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $product->product_name,
                     'sku' => $product->sku,
                     'quantity' => $item['quantity'],
                     'unit_price' => $product->price,
-                    'cost_price_at_sale' => $product->cost_price,
+                    'cost_price_at_sale' => $costPriceAtSale,
                     'tax_rate' => $item['tax_rate'],
                     'subtotal_amount' => $item['subtotal_amount'],
                     'discount_amount' => $item['discount_amount'],
@@ -139,16 +159,6 @@ class CheckoutService
                 ]);
                 AuditLogService::created(OrderItem::class, $orderItem->id, $this->orderItemValues($orderItem));
 
-                if ($product->type->tracksInventory()) {
-                    $this->inventoryService->sell(
-                        $product,
-                        $lockedShift->register->warehouse,
-                        $item['quantity'],
-                        $user,
-                        $order,
-                        'Sale '.$order->invoice_number,
-                    );
-                }
             }
 
             foreach ($normalizedPayments as $values) {

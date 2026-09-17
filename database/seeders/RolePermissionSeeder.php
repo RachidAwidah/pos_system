@@ -11,17 +11,18 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         $roles = Role::query()->whereIn('role_name', ['Admin', 'Manager', 'Cashier'])->get()->keyBy('role_name');
-        $permissions = Permission::query()->get()->keyBy('permission_key');
+        $cashierPermissions = [
+            'sales.create', 'sales.view', 'customers.view', 'customers.create',
+            'products.view', 'shifts.open', 'shifts.close',
+        ];
+        $managerExcludedPermissions = ['users.delete', 'roles.delete', 'settings.edit', 'audit_logs.view'];
 
-        $roles['Admin']->permissions()->sync($permissions->pluck('id'));
+        $roles['Admin']->permissions()->sync(Permission::query()->pluck('id'));
         $roles['Manager']->permissions()->sync(
-            $permissions->except(['users.delete', 'roles.delete', 'settings.edit'])->pluck('id'),
+            Permission::query()->whereNotIn('permission_key', $managerExcludedPermissions)->pluck('id'),
         );
         $roles['Cashier']->permissions()->sync(
-            $permissions->only([
-                'sales.create', 'sales.view', 'customers.view', 'customers.create',
-                'products.view', 'shifts.open', 'shifts.close',
-            ])->pluck('id'),
+            Permission::query()->whereIn('permission_key', $cashierPermissions)->pluck('id'),
         );
     }
 }

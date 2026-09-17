@@ -32,7 +32,7 @@ class GoodsReceiptItemFactory extends Factory
             'tax_amount' => 0,
             'total_amount' => $subtotalAmount,
             'batch_number' => fake()->optional()->bothify('LOT-####??'),
-            'expires_at' => fake()->optional()->dateTimeBetween('+1 month', '+2 years')->format('Y-m-d'),
+            'expires_at' => fake()->optional()->dateTimeBetween('+1 month', '+2 years')?->format('Y-m-d'),
         ];
     }
 }

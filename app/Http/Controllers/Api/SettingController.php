@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BulkUpdateSettingsRequest;
 use App\Http\Requests\UpdateSettingRequest;
 use App\Http\Resources\SettingResource;
 use App\Models\Setting;
@@ -38,6 +39,41 @@ class SettingController extends Controller
             ]);
 
             return new SettingResource($setting);
+        });
+    }
+
+    public function bulkUpdate(BulkUpdateSettingsRequest $request): AnonymousResourceCollection
+    {
+        return DB::transaction(function () use ($request): AnonymousResourceCollection {
+            $settingsData = $request->validated('settings');
+
+            foreach ($settingsData as $key => $value) {
+                $setting = Setting::query()->where('key', $key)->first();
+
+                if (! $setting) {
+                    continue;
+                }
+
+                $oldValue = $setting->value;
+
+                if ($setting->type === 'boolean') {
+                    $value = $value ? 'true' : 'false';
+                } elseif ($setting->type === 'json') {
+                    $value = json_encode($value, JSON_THROW_ON_ERROR);
+                } else {
+                    $value = (string) $value;
+                }
+
+                $setting->update(['value' => $value]);
+
+                AuditLogService::updated(Setting::class, $setting->id, [
+                    $key => $oldValue,
+                ], [
+                    $key => $setting->value,
+                ]);
+            }
+
+            return SettingResource::collection(Setting::query()->orderBy('group')->orderBy('key')->get());
         });
     }
 }

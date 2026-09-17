@@ -5,12 +5,15 @@ namespace App\Models;
 use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[Table(name: 'products', key: 'id', keyType: 'string', incrementing: false)]
 #[Fillable([
@@ -35,6 +38,19 @@ class Product extends Model
         'cost_price' => 'decimal:2',
         'price' => 'decimal:2',
     ];
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(function (): string {
+            if ($this->image === null || $this->image === '') {
+                return asset('images/product-placeholder.svg');
+            }
+
+            return Str::startsWith($this->image, ['http://', 'https://'])
+                ? $this->image
+                : Storage::disk('public')->url($this->image);
+        });
+    }
 
     public function unit(): BelongsTo
     {

@@ -3,15 +3,15 @@
 namespace App\Services;
 
 use App\Enums\LoyaltyTransactionType;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\Customer;
 use App\Models\LoyaltyTransaction;
 use App\Models\Order;
 use App\Models\SalesReturn;
 use App\Models\Setting;
 use App\Models\User;
-use DomainException;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 class LoyaltyService
 {

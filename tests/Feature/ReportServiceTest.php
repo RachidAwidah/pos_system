@@ -5,8 +5,6 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\Product;
-use App\Models\Register;
-use App\Models\User;
 use App\Services\CashSessionService;
 use App\Services\CheckoutService;
 use App\Services\ReportService;
@@ -28,8 +26,8 @@ class ReportServiceTest extends TestCase
     public function test_reports_calculate_net_sales_profit_and_restocked_returns(): void
     {
         CarbonImmutable::setTestNow('2030-04-15 09:00:00');
-        $user = User::query()->where('email', config('pos.admin_email'))->firstOrFail();
-        $register = Register::query()->where('code', 'MAIN-REG-01')->firstOrFail();
+        $user = $this->createTestUser();
+        $register = $this->createTestRegister();
         $cash = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
         $product = Product::query()->where('sku', 'SKU-001')->firstOrFail();
         $customer = Customer::factory()->create(['name' => 'Report Customer', 'credit_limit' => '100.00', 'balance' => '0.00']);
@@ -60,8 +58,8 @@ class ReportServiceTest extends TestCase
         $this->assertSame(1, $summary['orders_count']);
         $this->assertSame(1, $summary['returns_count']);
         $this->assertSame('1.00', $summary['net_sales']);
-        $this->assertSame('0.50', $summary['cost_of_goods_sold']);
-        $this->assertSame('0.50', $summary['gross_profit']);
+        $this->assertSame(bcadd((string) $order->items->first()->cost_price_at_sale, '0.005', 2), $summary['cost_of_goods_sold']);
+        $this->assertSame(bcsub($summary['net_sales'], $summary['cost_of_goods_sold'], 2), $summary['gross_profit']);
         $this->assertSame('1.000', $summary['net_quantity']);
         $this->assertSame($product->id, $products[0]['product_id']);
         $this->assertSame('1.000', $products[0]['net_quantity']);

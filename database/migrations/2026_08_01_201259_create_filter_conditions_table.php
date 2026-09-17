@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('filter_conditions', function (Blueprint $table) {
-            $table->uuid("id")->primary();
+            $table->uuid('id')->primary();
             $table->foreignUuid('filter_id')->references('id')->on('saved_filters')->onDelete('cascade');
             $table->string('column_name');
             $table->string('operator');

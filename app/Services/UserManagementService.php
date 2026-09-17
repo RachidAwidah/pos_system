@@ -10,10 +10,14 @@ use Illuminate\Validation\ValidationException;
 
 class UserManagementService
 {
+    public function __construct(private AccessManagementGuard $access) {}
+
     /** @param array<string, mixed> $data */
     public function create(array $data): User
     {
         return DB::transaction(function () use ($data): User {
+            $this->access->lockAdministratorRole();
+            $this->access->ensureRolesCanBeGranted($data['role_ids']);
             $user = User::query()->create([
                 'full_name' => $data['name'],
                 'email' => $data['email'],
@@ -33,6 +37,9 @@ class UserManagementService
     public function update(User $user, array $data): User
     {
         return DB::transaction(function () use ($user, $data): User {
+            $this->access->lockAdministratorRole();
+            $user = User::query()->lockForUpdate()->findOrFail($user->id);
+            $this->access->ensureUserCanBeManaged($user);
             $oldValues = $this->auditValues($user);
             $attributes = [];
 
@@ -53,6 +60,7 @@ class UserManagementService
             }
 
             if (array_key_exists('role_ids', $data)) {
+                $this->access->ensureRolesCanBeGranted($data['role_ids']);
                 $this->guardLastAdministratorRole($user, $data['role_ids']);
             }
 
@@ -60,6 +68,7 @@ class UserManagementService
 
             if (array_key_exists('role_ids', $data)) {
                 $user->roles()->sync($data['role_ids']);
+                $user->unsetRelation('roles');
             }
 
             $newValues = $this->auditValues($user);
@@ -80,12 +89,15 @@ class UserManagementService
             throw ValidationException::withMessages(['user' => ['لا يمكنك حذف حسابك الحالي.']]);
         }
 
-        if ($user->hasRole('Admin') && $this->administratorCount() === 1) {
-            throw ValidationException::withMessages(['user' => ['لا يمكن حذف آخر مدير للنظام.']]);
-        }
-
         DB::transaction(function () use ($user): void {
+            $this->access->lockAdministratorRole();
+            $user = User::query()->lockForUpdate()->findOrFail($user->id);
+            $this->access->ensureUserCanBeManaged($user);
+            if ($user->hasRole('Admin') && $this->administratorCount() === 1) {
+                throw ValidationException::withMessages(['user' => ['لا يمكن حذف آخر مدير للنظام.']]);
+            }
             AuditLogService::deleted(User::class, $user->id, $this->auditValues($user));
+            $user->tokens()->delete();
             $user->delete();
         });
     }
@@ -116,7 +128,7 @@ class UserManagementService
     /** @return array{full_name: string, email: string, phone: ?string, must_change_password: bool, role_ids: array<int, string>} */
     private function auditValues(User $user): array
     {
-        $user->loadMissing('roles:id');
+        $user->loadMissing('roles');
 
         return [
             ...$user->only(['full_name', 'email', 'phone', 'must_change_password']),

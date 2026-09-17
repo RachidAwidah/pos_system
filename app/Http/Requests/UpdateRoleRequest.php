@@ -25,7 +25,7 @@ class UpdateRoleRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:100', Rule::unique('roles', 'role_name')->ignore($this->route('role'))],
-            'permission_ids' => ['sometimes', 'required', 'array'],
+            'permission_ids' => ['sometimes', 'array'],
             'permission_ids.*' => ['required', 'uuid', 'distinct', 'exists:permissions,id'],
         ];
     }

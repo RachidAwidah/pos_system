@@ -37,6 +37,9 @@ class CheckoutRequest extends FormRequest
             'discount_value' => ['sometimes', 'required', 'numeric', 'decimal:0,2', 'min:0'],
             'loyalty_points' => ['sometimes', 'integer', 'min:0'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'display_currency' => ['sometimes', 'string', 'in:USD,SYP,TRY'],
+            'exchange_rate' => ['nullable', 'numeric', 'min:0'],
+            'rate_provider' => ['nullable', 'string', 'max:50'],
         ];
     }
 }

@@ -34,7 +34,15 @@ class StoreProductRequest extends FormRequest
             'cost_price' => ['required', 'numeric', 'min:0'],
             'price' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'warehouse_id' => [
+                'required_if:type,stock',
+                'nullable',
+                'uuid',
+                Rule::exists('warehouses', 'id')->where('is_active', true),
+            ],
+            'opening_quantity' => ['required_if:type,stock', 'nullable', 'numeric', 'decimal:0,3', 'min:0'],
+            'reorder_level' => ['required_if:type,stock', 'nullable', 'numeric', 'decimal:0,3', 'min:0'],
         ];
     }
 }

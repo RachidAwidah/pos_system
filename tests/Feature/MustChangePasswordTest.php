@@ -51,4 +51,13 @@ class MustChangePasswordTest extends TestCase
 
         $this->assertTrue($user->refresh()->must_change_password);
     }
+
+    public function test_user_can_logout_before_completing_the_required_password_change(): void
+    {
+        $user = User::factory()->create(['must_change_password' => true]);
+
+        $this->actingAs($user)->post('/logout')->assertRedirect(route('login'));
+
+        $this->assertGuest();
+    }
 }

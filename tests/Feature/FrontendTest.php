@@ -39,9 +39,10 @@ class FrontendTest extends TestCase
         $this->actingAs($admin)->get('/dashboard')->assertOk()->assertSee('لوحة التحكم');
         $this->actingAs($admin)->get('/pos')->assertOk()->assertSee('شاشة البيع');
         $this->actingAs($admin)->get('/products')->assertOk()->assertSee('Bottled Water');
+        $this->actingAs($admin)->get('/categories')->assertOk()->assertSee('شجرة التصنيفات');
         $this->actingAs($admin)->get('/orders')->assertOk()->assertSee('سجل الفواتير');
         $this->actingAs($admin)->get('/reports')->assertOk()->assertSee('التقارير والتحليلات');
-        $this->actingAs($admin)->get('/customers')->assertOk()->assertSee('Walk-in Customer');
+        $this->actingAs($admin)->get('/customers')->assertOk()->assertViewIs('customers.index');
         $this->actingAs($admin)->get('/suppliers')->assertOk()->assertSee('Main Supplier');
         $this->actingAs($admin)->get('/users')->assertOk()->assertSee($admin->full_name);
         $this->actingAs($admin)->get('/users/create')->assertOk()->assertSee('إنشاء مستخدم');
@@ -118,5 +119,14 @@ class FrontendTest extends TestCase
             'email' => 'web.rate.limit@example.com',
             'password' => 'Incorrect!123',
         ])->assertTooManyRequests();
+    }
+
+    public function test_cashier_is_redirected_from_financial_dashboard_to_pos(): void
+    {
+        $cashier = User::factory()->create(['must_change_password' => false]);
+        $cashier->roles()->sync([Role::query()->where('role_name', 'Cashier')->firstOrFail()->id]);
+
+        $this->actingAs($cashier)->get('/dashboard')->assertRedirect(route('pos.index'));
+        $this->actingAs($cashier)->get('/reports')->assertForbidden();
     }
 }

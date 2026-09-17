@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Enums\InventoryCountStatus;
+use App\Enums\ProductType;
 use App\Enums\StockMovementType;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\GoodsReceipt;
 use App\Models\InventoryBalance;
 use App\Models\InventoryCount;
@@ -14,10 +17,8 @@ use App\Models\PurchaseOrder;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
-use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 class InventoryService
 {
@@ -71,6 +72,21 @@ class InventoryService
                     notes: 'Opening inventory balance',
                 );
             }
+
+            return $balance;
+        }, attempts: 5);
+    }
+
+    public function setReorderLevel(Product $product, Warehouse $warehouse, string $reorderLevel): InventoryBalance
+    {
+        $normalizedReorderLevel = $this->normalizeDecimal($reorderLevel);
+
+        return DB::transaction(function () use ($product, $warehouse, $normalizedReorderLevel): InventoryBalance {
+            $balance = $this->balanceForUpdate($product, $warehouse);
+            $oldValues = $this->balanceValues($balance);
+            $balance->update(['reorder_level' => $normalizedReorderLevel]);
+            $balance->refresh();
+            AuditLogService::updated(InventoryBalance::class, $balance->id, $oldValues, $this->balanceValues($balance));
 
             return $balance;
         }, attempts: 5);
@@ -289,6 +305,147 @@ class InventoryService
         }, attempts: 5);
     }
 
+    /** @param list<string> $productIds */
+    public function startInventoryCount(
+        Warehouse $warehouse,
+        User $startedBy,
+        array $productIds = [],
+        ?string $notes = null,
+    ): InventoryCount {
+        return DB::transaction(function () use ($warehouse, $startedBy, $productIds, $notes): InventoryCount {
+            $lockedWarehouse = Warehouse::query()->lockForUpdate()->findOrFail($warehouse->id);
+
+            if (! $lockedWarehouse->is_active) {
+                throw new DomainException('An inventory count cannot be started for an inactive warehouse.');
+            }
+
+            $hasActiveCount = InventoryCount::query()
+                ->whereBelongsTo($lockedWarehouse)
+                ->whereIn('status', [InventoryCountStatus::Counting, InventoryCountStatus::Reviewed])
+                ->exists();
+
+            if ($hasActiveCount) {
+                throw new DomainException('This warehouse already has an active inventory count.');
+            }
+
+            $products = Product::query()
+                ->where('type', ProductType::Stock)
+                ->when($productIds !== [], fn ($query) => $query->whereKey($productIds))
+                ->with(['inventoryBalances' => fn ($query) => $query->whereBelongsTo($lockedWarehouse)])
+                ->orderBy('id')
+                ->get();
+
+            if ($products->isEmpty()) {
+                throw new DomainException('An inventory count must contain at least one stock product.');
+            }
+
+            $inventoryCount = InventoryCount::query()->create([
+                'warehouse_id' => $lockedWarehouse->id,
+                'started_by_user_id' => $startedBy->id,
+                'status' => InventoryCountStatus::Counting,
+                'notes' => $notes,
+            ]);
+            AuditLogService::created(InventoryCount::class, $inventoryCount->id, $this->countValues($inventoryCount));
+
+            foreach ($products as $product) {
+                $balance = $product->inventoryBalances->first();
+                $item = $inventoryCount->items()->create([
+                    'product_id' => $product->id,
+                    'expected_quantity' => $balance?->quantity_on_hand ?? '0.000',
+                ]);
+                AuditLogService::created(InventoryCountItem::class, $item->id, $this->countItemValues($item));
+            }
+
+            return $inventoryCount->load(['warehouse', 'startedBy', 'approvedBy', 'items.product']);
+        }, attempts: 5);
+    }
+
+    /** @param list<array{product_id: string, counted_quantity: string|int|float}> $items */
+    public function recordInventoryCount(InventoryCount $inventoryCount, array $items): InventoryCount
+    {
+        return DB::transaction(function () use ($inventoryCount, $items): InventoryCount {
+            $lockedCount = InventoryCount::query()->lockForUpdate()->findOrFail($inventoryCount->id);
+
+            if ($lockedCount->status !== InventoryCountStatus::Counting) {
+                throw new DomainException('Only an inventory count in progress can be edited.');
+            }
+
+            $productIds = collect($items)->pluck('product_id');
+            $countItems = $lockedCount->items()
+                ->whereIn('product_id', $productIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('product_id');
+
+            if ($countItems->count() !== $productIds->count()) {
+                throw new InvalidArgumentException('One or more products do not belong to this inventory count.');
+            }
+
+            foreach ($items as $itemData) {
+                $item = $countItems->get($itemData['product_id']);
+                $countedQuantity = $this->normalizeDecimal((string) $itemData['counted_quantity']);
+                $oldValues = $this->countItemValues($item);
+                $item->update([
+                    'counted_quantity' => $countedQuantity,
+                    'difference_quantity' => bcsub($countedQuantity, (string) $item->expected_quantity, 3),
+                ]);
+                $item->refresh();
+                AuditLogService::updated(InventoryCountItem::class, $item->id, $oldValues, $this->countItemValues($item));
+            }
+
+            return $lockedCount->load(['warehouse', 'startedBy', 'approvedBy', 'items.product']);
+        }, attempts: 5);
+    }
+
+    public function reviewInventoryCount(InventoryCount $inventoryCount): InventoryCount
+    {
+        return DB::transaction(function () use ($inventoryCount): InventoryCount {
+            $lockedCount = InventoryCount::query()->lockForUpdate()->findOrFail($inventoryCount->id);
+
+            if ($lockedCount->status !== InventoryCountStatus::Counting) {
+                throw new DomainException('Only an inventory count in progress can be reviewed.');
+            }
+
+            if ($lockedCount->items()->whereNull('counted_quantity')->exists()) {
+                throw new DomainException('Every inventory count item must have a counted quantity before review.');
+            }
+
+            $oldValues = $this->countValues($lockedCount);
+            $lockedCount->update([
+                'status' => InventoryCountStatus::Reviewed,
+                'counted_at' => now(),
+            ]);
+            $lockedCount->refresh();
+            AuditLogService::updated(InventoryCount::class, $lockedCount->id, $oldValues, $this->countValues($lockedCount));
+
+            return $lockedCount->load(['warehouse', 'startedBy', 'approvedBy', 'items.product']);
+        }, attempts: 5);
+    }
+
+    public function cancelInventoryCount(InventoryCount $inventoryCount, string $reason): InventoryCount
+    {
+        return DB::transaction(function () use ($inventoryCount, $reason): InventoryCount {
+            $lockedCount = InventoryCount::query()->lockForUpdate()->findOrFail($inventoryCount->id);
+
+            if (! in_array($lockedCount->status, [InventoryCountStatus::Draft, InventoryCountStatus::Counting, InventoryCountStatus::Reviewed], true)) {
+                throw new DomainException('This inventory count can no longer be cancelled.');
+            }
+
+            $oldValues = $this->countValues($lockedCount);
+            $cancellationNote = 'Cancelled: '.trim($reason);
+            $lockedCount->update([
+                'status' => InventoryCountStatus::Cancelled,
+                'notes' => filled($lockedCount->notes)
+                    ? $lockedCount->notes.PHP_EOL.$cancellationNote
+                    : $cancellationNote,
+            ]);
+            $lockedCount->refresh();
+            AuditLogService::updated(InventoryCount::class, $lockedCount->id, $oldValues, $this->countValues($lockedCount));
+
+            return $lockedCount->load(['warehouse', 'startedBy', 'approvedBy', 'items.product']);
+        }, attempts: 5);
+    }
+
     public function applyInventoryCount(InventoryCount $inventoryCount, User $approvedBy): InventoryCount
     {
         return DB::transaction(function () use ($inventoryCount, $approvedBy): InventoryCount {
@@ -416,6 +573,10 @@ class InventoryService
 
         $oldValues = $this->balanceValues($balance);
         $newAverageCost = (string) $balance->average_cost;
+        $movementUnitCost = $unitCost;
+        if ($movementType === StockMovementType::Sale && $movementUnitCost === null) {
+            $movementUnitCost = $newAverageCost;
+        }
         if ($updateAverageCost && $unitCost !== null && bccomp($quantityDelta, '0.000', 3) === 1) {
             $newAverageCost = $this->weightedAverageCost($balanceBefore, $newAverageCost, $quantityDelta, $unitCost, $balanceAfter);
         }
@@ -440,7 +601,7 @@ class InventoryService
             $goodsReceipt,
             $inventoryCount,
             $transferBatchId,
-            $unitCost,
+            $movementUnitCost,
             $notes,
         );
     }

@@ -17,9 +17,11 @@ class SalesReturnController extends Controller
     {
         $validated = $request->validated();
 
+        $shift = isset($validated['shift_id']) ? Shift::query()->findOrFail($validated['shift_id']) : null;
+
         return new SalesReturnResource($this->salesReturnService->complete(
             $order,
-            Shift::query()->findOrFail($validated['shift_id']),
+            $shift,
             $request->user(),
             $validated['items'],
             $validated['refunds'],

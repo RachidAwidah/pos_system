@@ -20,6 +20,8 @@ class MustChangePassword
         if (! $user || ! $user->must_change_password || $request->routeIs([
             'password.change.form',
             'password.change.update',
+            'password.change',
+            'logout',
         ])) {
             return $next($request);
         }

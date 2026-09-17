@@ -14,8 +14,74 @@ document.addEventListener('DOMContentLoaded', () => {
         backdrop.classList.add('hidden');
     });
 
+    initializeCategoryTrees();
+    initializeProductForms();
     initializePos();
 });
+
+function initializeCategoryTrees() {
+    document.querySelectorAll('[data-tree-toggle]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const children = button.closest('li')?.querySelector(':scope > [data-tree-children]');
+            const arrow = button.querySelector('[data-tree-arrow]');
+
+            if (! children) {
+                return;
+            }
+
+            const isOpening = children.classList.contains('hidden');
+            children.classList.toggle('hidden', ! isOpening);
+            arrow?.classList.toggle('rotate-90', isOpening);
+            button.setAttribute('aria-expanded', String(isOpening));
+        });
+    });
+}
+
+function initializeProductForms() {
+    document.querySelectorAll('[data-product-form]').forEach((form) => {
+        const type = form.querySelector('[data-product-type]');
+        const inventoryFields = form.querySelector('[data-inventory-fields]');
+        const inventoryInputs = form.querySelectorAll('[data-inventory-input]');
+        const costPrice = form.querySelector('[data-cost-price]');
+        const salePrice = form.querySelector('[data-sale-price]');
+        const profitMargin = form.querySelector('[data-profit-margin]');
+        const imageInput = form.querySelector('[data-product-image-input]');
+        const imagePreview = form.querySelector('[data-product-image-preview]');
+
+        const syncInventoryFields = () => {
+            const tracksInventory = type?.value === 'stock';
+            inventoryFields?.classList.toggle('hidden', ! tracksInventory);
+            inventoryInputs.forEach((input) => {
+                input.disabled = ! tracksInventory;
+                input.required = tracksInventory;
+            });
+        };
+
+        const syncProfitMargin = () => {
+            const cost = Number(costPrice?.value || 0);
+            const sale = Number(salePrice?.value || 0);
+            const margin = sale > 0 ? ((sale - cost) / sale) * 100 : 0;
+
+            if (profitMargin) {
+                profitMargin.textContent = `${margin.toFixed(2)}%`;
+            }
+        };
+
+        type?.addEventListener('change', syncInventoryFields);
+        costPrice?.addEventListener('input', syncProfitMargin);
+        salePrice?.addEventListener('input', syncProfitMargin);
+        imageInput?.addEventListener('change', () => {
+            const image = imageInput.files?.[0];
+
+            if (image && imagePreview) {
+                imagePreview.src = URL.createObjectURL(image);
+            }
+        });
+
+        syncInventoryFields();
+        syncProfitMargin();
+    });
+}
 
 function initializePos() {
     const root = document.querySelector('[data-pos-root]');
@@ -56,7 +122,7 @@ function initializePos() {
             const matchesTerm = ! term || [product.name, product.sku, product.barcode]
                 .filter(Boolean)
                 .some((value) => value.toLowerCase().includes(term));
-            const matchesCategory = ! categoryId || product.category_id === categoryId;
+            const matchesCategory = ! categoryId || product.category_path_ids.includes(categoryId);
 
             return matchesTerm && matchesCategory;
         });
@@ -67,7 +133,7 @@ function initializePos() {
         productGrid.innerHTML = filtered.map((product) => `
             <button type="button" data-add-product="${product.id}" class="group flex min-h-36 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 text-right shadow-sm hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50" ${product.tracks_inventory && product.quantity <= 0 ? 'disabled' : ''}>
                 <span class="flex items-start justify-between gap-3">
-                    <span class="grid size-11 place-items-center rounded-xl bg-brand-50 text-lg font-bold text-brand-700">${escapeHtml(product.name.charAt(0))}</span>
+                    <img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}" class="size-16 rounded-xl bg-slate-100 object-cover">
                     <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">${product.tracks_inventory ? `${product.quantity} ${product.unit}` : product.type}</span>
                 </span>
                 <span class="mt-4">

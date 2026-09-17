@@ -9,6 +9,8 @@ use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
 use App\Enums\SalesReturnStatus;
 use App\Enums\ShiftStatus;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\LoyaltyTransaction;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -18,10 +20,8 @@ use App\Models\SalesReturn;
 use App\Models\SalesReturnItem;
 use App\Models\Shift;
 use App\Models\User;
-use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 class SalesReturnService
 {
@@ -37,7 +37,7 @@ class SalesReturnService
      */
     public function complete(
         Order $order,
-        Shift $shift,
+        ?Shift $shift,
         User $user,
         array $items,
         array $refunds,
@@ -51,15 +51,26 @@ class SalesReturnService
             throw new InvalidArgumentException('A return reason is required.');
         }
 
+        $hasRefunds = $refunds !== [] && array_reduce($refunds, static fn (bool $carry, array $r) => $carry || (float) ($r['amount'] ?? 0) > 0, false);
+        if ($hasRefunds && $shift === null) {
+            throw new DomainException('Cash refunds require an open shift. Open a shift in the POS screen first, or choose a non-cash refund method.');
+        }
+
         return DB::transaction(function () use ($order, $shift, $user, $items, $refunds, $reason): SalesReturn {
-            $lockedShift = Shift::query()->with('register.warehouse')->lockForUpdate()->findOrFail($shift->id);
-            if ($lockedShift->status !== ShiftStatus::Open || $lockedShift->opened_by_user_id !== $user->id) {
-                throw new DomainException('Returns require the user\'s open cash session.');
+            $lockedShift = null;
+            if ($shift !== null) {
+                $lockedShift = Shift::query()->with('register.warehouse')->lockForUpdate()->findOrFail($shift->id);
+                if ($lockedShift->status !== ShiftStatus::Open || $lockedShift->opened_by_user_id !== $user->id) {
+                    throw new DomainException('Returns require the user\'s open cash session.');
+                }
             }
 
             $lockedOrder = Order::query()->with('customer')->lockForUpdate()->findOrFail($order->id);
             if (! in_array($lockedOrder->status, [OrderStatus::Completed, OrderStatus::PartiallyRefunded], true)) {
                 throw new DomainException('Only completed or partially refunded orders can be returned.');
+            }
+            if ($lockedShift !== null && $lockedOrder->warehouse_id !== $lockedShift->register->warehouse_id) {
+                throw new DomainException('Returns must be processed in the warehouse that completed the original sale.');
             }
 
             $normalizedItems = $this->normalizeItems($lockedOrder, $items);
@@ -77,23 +88,30 @@ class SalesReturnService
                 throw new DomainException('The return would exceed the order total.');
             }
 
-            $creditAmount = $this->creditAmountForReturn($lockedOrder, $returnAmount);
-            $cashRefundAmount = bcsub($returnAmount, $creditAmount, 2);
             $normalizedRefunds = $this->normalizeRefunds($lockedOrder, $refunds);
             $providedRefundAmount = '0.00';
             foreach ($normalizedRefunds as $refund) {
                 $providedRefundAmount = bcadd($providedRefundAmount, $refund['amount'], 2);
             }
-            if (bccomp($providedRefundAmount, $cashRefundAmount, 2) !== 0) {
-                throw new DomainException('Refund payments must equal the paid portion of the return.');
+            $cashRefundAmount = $providedRefundAmount;
+            $creditAmount = bcsub($returnAmount, $cashRefundAmount, 2);
+            if (bccomp($creditAmount, '0.00', 2) === -1) {
+                throw new DomainException('Refund payments cannot exceed the return total.');
+            }
+            $maxCredit = bccomp((string) $lockedOrder->due_amount, $returnAmount, 2) === -1
+                ? (string) $lockedOrder->due_amount
+                : $returnAmount;
+            if (bccomp($creditAmount, $maxCredit, 2) === 1) {
+                $minCash = bcsub($returnAmount, $maxCredit, 2);
+                throw new DomainException("Refund payments must be at least {$minCash} to stay within the outstanding balance.");
             }
 
             $salesReturn = SalesReturn::query()->create([
                 'return_number' => $this->nextReturnNumber(),
                 'order_id' => $lockedOrder->id,
                 'user_id' => $user->id,
-                'shift_id' => $lockedShift->id,
-                'warehouse_id' => $lockedShift->register->warehouse_id,
+                'shift_id' => $lockedShift?->id,
+                'warehouse_id' => $lockedOrder->warehouse_id,
                 'status' => SalesReturnStatus::Completed,
                 'subtotal_amount' => $subtotalAmount,
                 'tax_amount' => $taxAmount,
@@ -120,7 +138,7 @@ class SalesReturnService
                 if ($item['restock'] && $orderItem->product->type->tracksInventory()) {
                     $this->inventoryService->customerReturn(
                         $orderItem->product,
-                        $lockedShift->register->warehouse,
+                        $lockedOrder->warehouse,
                         $item['quantity'],
                         $user,
                         $lockedOrder,
@@ -132,7 +150,7 @@ class SalesReturnService
             foreach ($normalizedRefunds as $values) {
                 $payment = $lockedOrder->payments()->create([
                     'sales_return_id' => $salesReturn->id,
-                    'shift_id' => $lockedShift->id,
+                    'shift_id' => $lockedShift?->id,
                     'user_id' => $user->id,
                     'payment_method_id' => $values['payment_method']->id,
                     'type' => PaymentType::Refund,
@@ -148,8 +166,12 @@ class SalesReturnService
 
             $oldOrderValues = $this->orderValues($lockedOrder);
             $fullyRefunded = bccomp($newRefundedAmount, (string) $lockedOrder->final_amount, 2) === 0;
+            $newDueAmount = bcsub((string) $lockedOrder->due_amount, $creditAmount, 2);
+            $newPaidAmount = bcsub((string) $lockedOrder->paid_amount, $cashRefundAmount, 2);
             $lockedOrder->update([
                 'refunded_amount' => $newRefundedAmount,
+                'paid_amount' => $newPaidAmount,
+                'due_amount' => $newDueAmount,
                 'status' => $fullyRefunded ? OrderStatus::Refunded : OrderStatus::PartiallyRefunded,
                 'payment_status' => $fullyRefunded ? OrderPaymentStatus::Refunded : OrderPaymentStatus::PartiallyRefunded,
             ]);
@@ -172,7 +194,7 @@ class SalesReturnService
                 );
             }
 
-            return $salesReturn->load(['items.product', 'payments.paymentMethod', 'order', 'warehouse', 'shift']);
+            return $salesReturn->load(['items.product', 'payments.paymentMethod', 'order', 'user', 'warehouse', 'shift']);
         }, attempts: 5);
     }
 
@@ -207,21 +229,25 @@ class SalesReturnService
         foreach ($itemsById as $itemId => $item) {
             $orderItem = $orderItems->get($itemId);
             $quantity = $this->normalizeQuantity((string) ($item['quantity'] ?? ''), $orderItem->product->unit->decimal_places);
-            $returnedQuantity = (string) $orderItem->returnItems()
+            $completedReturnTotals = $orderItem->returnItems()
                 ->whereHas('salesReturn', fn ($query) => $query->where('status', SalesReturnStatus::Completed->value))
-                ->sum('quantity');
+                ->selectRaw('COALESCE(SUM(quantity), 0) AS quantity')
+                ->selectRaw('COALESCE(SUM(refund_amount), 0) AS refund_amount')
+                ->selectRaw('COALESCE(SUM(tax_amount), 0) AS tax_amount')
+                ->firstOrFail();
+            $returnedQuantity = (string) $completedReturnTotals->quantity;
             $remainingQuantity = bcsub((string) $orderItem->quantity, $returnedQuantity, 3);
             if (bccomp($quantity, $remainingQuantity, 3) === 1) {
                 throw new DomainException('A returned quantity cannot exceed the remaining sold quantity.');
             }
 
-            $previousRefund = (string) $orderItem->returnItems()
-                ->whereHas('salesReturn', fn ($query) => $query->where('status', SalesReturnStatus::Completed->value))
-                ->sum('refund_amount');
-            $refundAmount = bccomp($quantity, $remainingQuantity, 3) === 0
-                ? bcsub((string) $orderItem->total_amount, $previousRefund, 2)
+            $isFinalReturn = bccomp($quantity, $remainingQuantity, 3) === 0;
+            $refundAmount = $isFinalReturn
+                ? bcsub((string) $orderItem->total_amount, (string) $completedReturnTotals->refund_amount, 2)
                 : $this->roundMoney(bcdiv(bcmul((string) $orderItem->total_amount, $quantity, 6), (string) $orderItem->quantity, 6));
-            $taxAmount = $this->roundMoney(bcdiv(bcmul((string) $orderItem->tax_amount, $quantity, 6), (string) $orderItem->quantity, 6));
+            $taxAmount = $isFinalReturn
+                ? bcsub((string) $orderItem->tax_amount, (string) $completedReturnTotals->tax_amount, 2)
+                : $this->roundMoney(bcdiv(bcmul((string) $orderItem->tax_amount, $quantity, 6), (string) $orderItem->quantity, 6));
             if (bccomp($taxAmount, $refundAmount, 2) === 1) {
                 $taxAmount = $refundAmount;
             }
@@ -324,7 +350,13 @@ class SalesReturnService
             return $remainingPoints;
         }
 
-        return min($remainingPoints, (int) floor($earnedPoints * ((float) $returnAmount / (float) $order->final_amount)));
+        $proportionalPoints = (int) bcdiv(
+            bcmul((string) $earnedPoints, $returnAmount, 2),
+            (string) $order->final_amount,
+            0,
+        );
+
+        return min($remainingPoints, $proportionalPoints);
     }
 
     private function normalizeQuantity(string $quantity, int $decimalPlaces): string
@@ -425,7 +457,9 @@ class SalesReturnService
         return [
             'status' => $order->status->value,
             'payment_status' => $order->payment_status->value,
+            'paid_amount' => (string) $order->paid_amount,
             'refunded_amount' => (string) $order->refunded_amount,
+            'due_amount' => (string) $order->due_amount,
         ];
     }
 }

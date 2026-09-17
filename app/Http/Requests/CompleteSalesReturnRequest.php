@@ -23,7 +23,7 @@ class CompleteSalesReturnRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'shift_id' => ['required', 'uuid', 'exists:shifts,id'],
+            'shift_id' => ['nullable', 'uuid', 'exists:shifts,id'],
             'reason' => ['required', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.order_item_id' => ['required', 'uuid', 'distinct', 'exists:order_items,id'],

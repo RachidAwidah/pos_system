@@ -15,7 +15,7 @@ class WarehouseSeeder extends Seeder
         Warehouse::query()->updateOrCreate(
             ['code' => 'MAIN'],
             [
-                'name' => 'Main Warehouse',
+                'name' => 'المستودع الرئيسي',
                 'address' => null,
                 'is_default' => true,
                 'is_active' => true,

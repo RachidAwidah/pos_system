@@ -6,14 +6,14 @@ use App\Enums\CashMovementType;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentType;
 use App\Enums\ShiftStatus;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\CashMovement;
 use App\Models\Payment;
 use App\Models\Register;
 use App\Models\Shift;
 use App\Models\User;
-use DomainException;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 class CashSessionService
 {
@@ -68,16 +68,59 @@ class CashSessionService
         return $this->recordMovement($shift, $user, CashMovementType::CashOut, $amount, $reason);
     }
 
-    public function close(Shift $shift, User $closedBy, string $closingCash): Shift
+    public function close(Shift $shift, User $closedBy, string $closingCash, ?string $closingNotes = null, ?string $adminOverrideReason = null): Shift
     {
-        $normalizedClosingCash = $this->normalizeMoney($closingCash);
+        return $this->closeSession($shift, $closedBy, $closingCash, null, $closingNotes, $adminOverrideReason);
+    }
 
-        return DB::transaction(function () use ($shift, $closedBy, $normalizedClosingCash): Shift {
+    public function forceClose(Shift $shift, User $closedBy, string $closingCash, string $reason, ?string $closingNotes = null): Shift
+    {
+        if (! $closedBy->hasRole('Admin')) {
+            throw new DomainException('Only an administrator can force-close another cash session.');
+        }
+
+        $reason = trim($reason);
+        if ($reason === '') {
+            throw new InvalidArgumentException('A force-close reason is required.');
+        }
+
+        return $this->closeSession($shift, $closedBy, $closingCash, $reason, $closingNotes ?? $reason, $reason);
+    }
+
+    private function closeSession(
+        Shift $shift,
+        User $closedBy,
+        string $closingCash,
+        ?string $forceCloseReason = null,
+        ?string $closingNotes = null,
+        ?string $adminOverrideReason = null,
+    ): Shift {
+        $normalizedClosingCash = $this->normalizeMoney($closingCash);
+        $normalizedClosingNotes = $closingNotes !== null ? trim($closingNotes) : null;
+        $normalizedAdminOverrideReason = $adminOverrideReason !== null ? trim($adminOverrideReason) : null;
+
+        return DB::transaction(function () use ($shift, $closedBy, $normalizedClosingCash, $forceCloseReason, $normalizedClosingNotes, $normalizedAdminOverrideReason): Shift {
             $lockedShift = Shift::query()->lockForUpdate()->findOrFail($shift->id);
             $this->ensureOpen($lockedShift);
+            if ($forceCloseReason === null) {
+                $this->ensureOwnedBy($lockedShift, $closedBy);
+            }
 
             $expectedCash = $this->expectedCash($lockedShift);
             $differenceAmount = bcsub($normalizedClosingCash, $expectedCash, 2);
+            $largeDifference = bccomp($differenceAmount, '50.00', 2) > 0 || bccomp($differenceAmount, '-50.00', 2) < 0;
+
+            if ($forceCloseReason === null && bccomp($differenceAmount, '0', 2) !== 0 && ($normalizedClosingNotes === null || $normalizedClosingNotes === '')) {
+                throw new InvalidArgumentException('يجب إدخال سبب الفرق في المبلغ.');
+            }
+
+            if ($largeDifference && ! $closedBy->hasRole('Admin')) {
+                throw new DomainException('الفرق يتجاوز 50 دولارًا؛ يجب أن يغلق مسؤول النظام الشفت بعد مراجعة النقد.');
+            }
+            if ($largeDifference && ($normalizedAdminOverrideReason === null || $normalizedAdminOverrideReason === '')) {
+                throw new InvalidArgumentException('يجب إدخال سبب التجاوز الإداري للفرق الذي يتجاوز 50 دولارًا.');
+            }
+
             $oldValues = $this->shiftValues($lockedShift);
 
             $lockedShift->update([
@@ -87,9 +130,31 @@ class CashSessionService
                 'closing_cash' => $normalizedClosingCash,
                 'expected_cash' => $expectedCash,
                 'difference_amount' => $differenceAmount,
+                'closing_notes' => $normalizedClosingNotes,
             ]);
             $lockedShift->refresh();
             AuditLogService::updated(Shift::class, $lockedShift->id, $oldValues, $this->shiftValues($lockedShift));
+
+            if ($forceCloseReason !== null) {
+                AuditLogService::log('force_close', Shift::class, $lockedShift->id, [
+                    'opened_by_user_id' => $lockedShift->opened_by_user_id,
+                ], [
+                    'closed_by_user_id' => $closedBy->id,
+                    'reason' => $forceCloseReason,
+                ]);
+            }
+
+            if (bccomp($differenceAmount, '0', 2) !== 0) {
+                AuditLogService::log('cash_difference', Shift::class, $lockedShift->id, [
+                    'expected_cash' => $expectedCash,
+                    'closing_cash' => $normalizedClosingCash,
+                ], [
+                    'difference_amount' => $differenceAmount,
+                    'type' => bccomp($differenceAmount, '0', 2) === 1 ? 'overage' : 'shortage',
+                    'closing_notes' => $normalizedClosingNotes,
+                    'admin_override_reason' => $normalizedAdminOverrideReason,
+                ]);
+            }
 
             return $lockedShift;
         }, attempts: 5);
@@ -112,6 +177,7 @@ class CashSessionService
         return DB::transaction(function () use ($shift, $user, $type, $normalizedAmount, $normalizedReason): CashMovement {
             $lockedShift = Shift::query()->lockForUpdate()->findOrFail($shift->id);
             $this->ensureOpen($lockedShift);
+            $this->ensureOwnedBy($lockedShift, $user);
 
             if ($type === CashMovementType::CashOut && bccomp($normalizedAmount, $this->expectedCash($lockedShift), 2) === 1) {
                 throw new DomainException('Cash out cannot exceed the expected cash currently in the register.');
@@ -131,7 +197,13 @@ class CashSessionService
         }, attempts: 5);
     }
 
-    private function expectedCash(Shift $shift): string
+    public function expectedCash(Shift $shift): string
+    {
+        return $this->cashSummary($shift)['expected_cash'];
+    }
+
+    /** @return array<string, string> */
+    public function cashSummary(Shift $shift): array
     {
         $cashPayments = (string) Payment::query()
             ->whereBelongsTo($shift)
@@ -152,17 +224,34 @@ class CashSessionService
             ->where('type', CashMovementType::CashOut->value)
             ->sum('amount');
 
-        return bcsub(
+        $expectedCash = bcsub(
             bcsub(bcadd(bcadd((string) $shift->opening_cash, $cashPayments, 2), $cashIn, 2), $cashRefunds, 2),
             $cashOut,
             2,
         );
+
+        return [
+            'currency' => 'USD',
+            'opening_cash' => (string) $shift->opening_cash,
+            'cash_payments' => bcadd($cashPayments, '0', 2),
+            'cash_refunds' => bcadd($cashRefunds, '0', 2),
+            'cash_in' => bcadd($cashIn, '0', 2),
+            'cash_out' => bcadd($cashOut, '0', 2),
+            'expected_cash' => $expectedCash,
+        ];
     }
 
     private function ensureOpen(Shift $shift): void
     {
         if ($shift->status !== ShiftStatus::Open) {
             throw new DomainException('Only an open cash session can be changed.');
+        }
+    }
+
+    private function ensureOwnedBy(Shift $shift, User $user): void
+    {
+        if ($shift->opened_by_user_id !== $user->id) {
+            throw new DomainException('Only the user who opened the cash session can change it.');
         }
     }
 
@@ -203,6 +292,7 @@ class CashSessionService
             'expected_cash' => $shift->expected_cash === null ? null : (string) $shift->expected_cash,
             'difference_amount' => $shift->difference_amount === null ? null : (string) $shift->difference_amount,
             'notes' => $shift->notes,
+            'closing_notes' => $shift->closing_notes,
         ];
     }
 

@@ -19,7 +19,7 @@ RUN apt-get update \
         libonig-dev \
         libxml2-dev \
         libsqlite3-dev \
-    && docker-php-ext-install pdo pdo_sqlite zip gd mbstring xml \
+    && docker-php-ext-install pdo pdo_mysql pdo_sqlite zip gd mbstring xml \
     && a2enmod rewrite headers \
     && sed -ri -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/000-default.conf \
     && sed -ri -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \

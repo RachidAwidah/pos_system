@@ -15,7 +15,7 @@ class AdminSeeder extends Seeder
             [
                 'full_name' => 'System Admin',
                 'password_hash' => Hash::make((string) config('pos.admin_password')),
-                'must_change_password' => true,
+                'must_change_password' => false,
             ],
         );
 

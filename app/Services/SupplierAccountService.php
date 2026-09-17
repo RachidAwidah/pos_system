@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\AccountEntryType;
 use App\Enums\PaymentStatus;
+use App\Exceptions\BusinessInputException as InvalidArgumentException;
+use App\Exceptions\BusinessRuleException as DomainException;
 use App\Models\GoodsReceipt;
 use App\Models\PaymentMethod;
 use App\Models\PurchaseOrder;
@@ -11,9 +13,7 @@ use App\Models\Supplier;
 use App\Models\SupplierLedgerEntry;
 use App\Models\SupplierPayment;
 use App\Models\User;
-use DomainException;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 class SupplierAccountService
 {
@@ -96,7 +96,7 @@ class SupplierAccountService
                 description: $notes,
             );
 
-            return $payment;
+            return $payment->load(['ledgerEntry', 'paymentMethod', 'purchaseOrder', 'user']);
         }, attempts: 5);
     }
 

@@ -10,14 +10,24 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\ReportService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
     public function __construct(public ReportService $reportService) {}
 
-    public function __invoke(): View
+    public function __invoke(): View|RedirectResponse
     {
+        $user = request()->user();
+        if (! $user->hasPermission('reports.view_financial')) {
+            if ($user->hasPermission('sales.create')) {
+                return redirect()->route('pos.index');
+            }
+
+            abort(403);
+        }
+
         $warehouse = Warehouse::query()->active()->defaultWarehouse()->firstOrFail();
         $filters = [
             'from' => now()->startOfMonth()->toDateString(),
