@@ -12,3 +12,23 @@ nul
 **/*.log
 .DS_Store
 Thumbs.db
+
+# AI/IDE tool artifacts
+.agents/
+.ai/
+.codex/
+.continue/
+.vscode/
+**/.vscode/
+
+# AI instruction/memory files (not for public repo)
+AGENTS.md
+role.md
+start-pos.cjs
+
+# Backend-specific AI artifacts
+backend/.github/copilot-instructions.md
+backend/.github/skills/
+
+# Frontend staging
+frontend/.staging-sakai/
